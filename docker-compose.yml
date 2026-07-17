@@ -1,0 +1,16 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gx_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: GX2026!root
+      MYSQL_DATABASE: gx_project
+      MYSQL_USER: gx_user
+      MYSQL_PASSWORD: GX2026!pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci

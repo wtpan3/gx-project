@@ -1,21 +1,46 @@
-# Python
+# ===== Python 后端 =====
 __pycache__/
 *.pyc
+*.pyo
 venv/
+.venv/
 *.log
-.env
 uvicorn.log
-mysql-data/
+app.log
 
-# Node
+# 环境变量（含数据库密码，绝不提交）
+.env
+backend/.env
+
+# SQLite（已弃用，历史遗留）
+*.db
+
+# ===== Node 前端 =====
 node_modules/
+frontend/node_modules/
 build/
 dist/
+frontend/build/
 
-# IDE
+# 前端本地环境覆盖（.env.development/.env.production 保留提交，.env.local 忽略）
+.env.local
+frontend/.env.local
+
+# ===== 数据与上传 =====
+mysql-data/
+uploads/
+backend/uploads/
+
+# ===== 临时文件 =====
+ddl_dev.sql
+*.swp
+*.tmp
+
+# ===== IDE =====
 .vscode/
 .idea/
+*.suo
 
-# OS
+# ===== OS =====
 .DS_Store
 Thumbs.db

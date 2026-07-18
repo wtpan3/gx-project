@@ -112,7 +112,7 @@ const UserManagement: React.FC = () => {
         open={modalVisible}
         onCancel={() => { setModalVisible(false); form.resetFields(); setEditingUser(null); }}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item name="username" label="用户名" rules={[{ required: true, message: '请输入用户名' }]}>

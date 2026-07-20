@@ -21,6 +21,7 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-from app.api.v1 import auth, users
+from app.api.v1 import auth, users, dashboard
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["认证"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["用户管理"])
+app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["首页仪表盘"])

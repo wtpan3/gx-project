@@ -42,3 +42,8 @@ class Token(BaseModel):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+
+class SetPasswordRequest(BaseModel):
+    """管理员为指定用户设置新密码"""
+    new_password: str

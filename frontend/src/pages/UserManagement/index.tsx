@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Space } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, KeyOutlined, LockOutlined, StopOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 
 interface User {
@@ -26,6 +26,10 @@ const UserManagement: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
+  // 修改密码弹框
+  const [pwdModalVisible, setPwdModalVisible] = useState(false);
+  const [pwdUser, setPwdUser] = useState<User | null>(null);
+  const [pwdForm] = Form.useForm();
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -61,10 +65,12 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  // 切换启用/停用状态
+  const handleToggleStatus = async (record: User) => {
+    const nextStatus = record.status === '启用' ? '停用' : '启用';
     try {
-      await api.delete(`/api/v1/users/${id}`);
-      message.success('已停用');
+      await api.put(`/api/v1/users/${record.id}`, { status: nextStatus });
+      message.success(`已${nextStatus}`);
       fetchUsers();
     } catch (error: any) {
       message.error(error.response?.data?.detail || '操作失败');
@@ -80,6 +86,20 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // 提交修改密码（指定新密码）
+  const handleSetPassword = async (values: { new_password: string }) => {
+    if (!pwdUser) return;
+    try {
+      await api.post(`/api/v1/users/${pwdUser.id}/set-password`, { new_password: values.new_password });
+      message.success('密码修改成功');
+      setPwdModalVisible(false);
+      pwdForm.resetFields();
+      setPwdUser(null);
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '修改失败');
+    }
+  };
+
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     { title: '用户名', dataIndex: 'username' },
@@ -90,14 +110,23 @@ const UserManagement: React.FC = () => {
     { title: '状态', dataIndex: 'status', render: (v: string) => <span style={{ color: v === '启用' ? 'green' : 'red' }}>{v}</span> },
     {
       title: '操作',
-      width: 280,
+      width: 380,
       render: (_: any, record: User) => (
-        <Space>
+        <Space wrap>
           <Button size="small" icon={<EditOutlined />} onClick={() => { setEditingUser(record); form.setFieldsValue(record); setModalVisible(true); }}>编辑</Button>
-          <Button size="small" icon={<KeyOutlined />} onClick={() => handleResetPassword(record.id)}>重置密码</Button>
-          <Popconfirm title="确认停用该用户？" onConfirm={() => handleDelete(record.id)}>
-            <Button size="small" danger icon={<DeleteOutlined />} disabled={record.status === '停用'}>停用</Button>
+          <Button size="small" icon={<LockOutlined />} onClick={() => { setPwdUser(record); pwdForm.resetFields(); setPwdModalVisible(true); }}>修改密码</Button>
+          <Popconfirm title="确认重置为默认密码 Admin@2026？" onConfirm={() => handleResetPassword(record.id)}>
+            <Button size="small" icon={<KeyOutlined />}>重置密码</Button>
           </Popconfirm>
+          {record.status === '启用' ? (
+            <Popconfirm title="确认停用该用户？" onConfirm={() => handleToggleStatus(record)}>
+              <Button size="small" danger icon={<StopOutlined />}>停用</Button>
+            </Popconfirm>
+          ) : (
+            <Popconfirm title="确认启用该用户？" onConfirm={() => handleToggleStatus(record)}>
+              <Button size="small" type="primary" ghost icon={<CheckCircleOutlined />}>启用</Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -137,6 +166,41 @@ const UserManagement: React.FC = () => {
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" block>提交</Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title={`修改密码${pwdUser ? ' - ' + pwdUser.real_name : ''}`}
+        open={pwdModalVisible}
+        onCancel={() => { setPwdModalVisible(false); pwdForm.resetFields(); setPwdUser(null); }}
+        footer={null}
+        destroyOnHidden
+      >
+        <Form form={pwdForm} layout="vertical" onFinish={handleSetPassword}>
+          <Form.Item name="new_password" label="新密码" rules={[{ required: true, min: 6, message: '密码至少6位' }]}>
+            <Input.Password placeholder="请输入新密码（至少6位）" />
+          </Form.Item>
+          <Form.Item
+            name="confirm_password"
+            label="确认密码"
+            dependencies={['new_password']}
+            rules={[
+              { required: true, message: '请再次输入新密码' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('new_password') === value) {
+                    return Promise.resolve();
+                  }
+                  return Promise.reject(new Error('两次输入的密码不一致'));
+                },
+              }),
+            ]}
+          >
+            <Input.Password placeholder="请再次输入新密码" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>确认修改</Button>
           </Form.Item>
         </Form>
       </Modal>

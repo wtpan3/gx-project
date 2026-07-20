@@ -1,0 +1,436 @@
+/* Dashboard 首页样式(遵循技术规范 3.6:固定列宽+横向滚动) */
+
+.dashboard-container {
+  padding: 16px;
+  background: #f0f2f5;
+}
+
+/* ===== ① 顶部卡片区(横向滚动) ===== */
+.stat-scroll {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.stat-row {
+  display: flex;
+  gap: 12px;
+  min-width: 980px;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  text-align: center;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(22, 119, 255, 0.15);
+  border-color: #91caff;
+  transform: translateY(-2px);
+}
+
+.stat-card .label {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
+}
+
+.stat-card .value {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 6px 0;
+  line-height: 1;
+}
+
+.stat-card .value.badge-red {
+  color: #ff4d4f;
+}
+
+.stat-card .value .unit {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.stat-card .drill {
+  font-size: 12px;
+  color: #1677ff;
+  white-space: nowrap;
+}
+
+/* ===== ② 交付进度(横向滚动) ===== */
+.overall-wrap {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.overall {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.overall .big-bar {
+  flex: 1;
+  height: 18px;
+  background: #f0f0f0;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.overall .big-bar-fill {
+  height: 100%;
+  background: #1677ff;
+  border-radius: 9px;
+  transition: width 0.3s;
+}
+
+.overall .pct {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1677ff;
+  min-width: 60px;
+  text-align: right;
+}
+
+.progress-scroll {
+  overflow-x: auto;
+}
+
+.progress-row {
+  display: flex;
+  gap: 16px;
+  min-width: 880px;
+}
+
+.progress-col {
+  flex: 1;
+  min-width: 280px;
+}
+
+.donut-wrap {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.donut {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.donut .inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.donut .inner .pct {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1677ff;
+}
+
+.donut .inner .sub {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 4px;
+}
+
+.legend {
+  flex: 1;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.legend-item .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-item span:last-child {
+  margin-left: auto;
+  font-weight: 600;
+}
+
+/* 软件模块进度 */
+.soft-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.soft-item {
+  cursor: pointer;
+}
+
+.soft-item .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.soft-item .top > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.soft-item .tag {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tag-on {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.tag-test {
+  background: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.tag-dev {
+  background: #e6f4ff;
+  color: #1677ff;
+  border: 1px solid #91caff;
+}
+
+.soft-item .bar {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.soft-item .bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* ===== ③ 里程碑表格(固定列宽+横向滚动+居中) ===== */
+.gantt-container {
+  overflow-x: auto;
+}
+
+.gantt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+  min-width: 1060px;
+}
+
+.gantt th,
+.gantt td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #f5f5f5;
+  text-align: center;
+}
+
+.gantt th {
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 500;
+  background: #fafafa;
+  white-space: nowrap;
+}
+
+.gantt td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gantt td.stage {
+  width: 120px;
+}
+
+.gantt td.task {
+  width: 180px;
+}
+
+.gantt td.date {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.gantt td.date.start {
+  width: 120px;
+}
+
+.gantt td.date.finish {
+  width: 140px;
+}
+
+.gantt td.status {
+  width: 100px;
+}
+
+.gantt th.axis {
+  min-width: 400px;
+}
+
+.gantt td.gbar-cell {
+  background: #fafafa;
+}
+
+.status.st-done {
+  color: #52c41a;
+  font-weight: 600;
+}
+
+.status.st-doing {
+  color: #fa8c16;
+  font-weight: 600;
+}
+
+.status.st-todo {
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 600;
+}
+
+/* ===== ④ 风险表格(固定列宽+横向滚动+居中) ===== */
+.tb-container {
+  overflow-x: auto;
+}
+
+.tb {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+  min-width: 1130px;
+}
+
+.tb th,
+.tb td {
+  padding: 9px 8px;
+  text-align: center;
+  border-bottom: 1px solid #f5f5f5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tb th {
+  color: rgba(0, 0, 0, 0.45);
+  font-weight: 500;
+  background: #fafafa;
+}
+
+.tb tbody tr {
+  cursor: pointer;
+}
+
+.tb tbody tr:hover {
+  background: #f5faff;
+}
+
+.lv {
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lv-h {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
+
+.lv-m {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+
+.lv-l {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+/* ===== ⑤ 待办区(两个独立框) ===== */
+.todo-panels {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.todo-panels > div {
+  flex: 1;
+}
+
+.filter-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.filter-btns button {
+  padding: 2px 8px;
+  border: 1px solid #d9d9d9;
+  background: #fff;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btns button.active {
+  background: #1677ff;
+  color: #fff;
+  border-color: #1677ff;
+}
+
+.filter-btns button:hover:not(.active) {
+  border-color: #1677ff;
+  color: #1677ff;
+}
+
+.todo-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.todo-item {
+  padding: 8px 12px;
+  border-left: 3px solid #1677ff;
+  background: #fafafa;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.todo-item:hover {
+  background: #e6f4ff;
+}

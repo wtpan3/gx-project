@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserResponse
+from app.schemas.user import UserCreate, UserUpdate, UserResponse, SetPasswordRequest
 from app.core.security import get_password_hash, require_roles
 
 router = APIRouter()
@@ -128,10 +128,28 @@ def reset_password(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin_or_pm),
 ):
-    """重置密码为 Admin@2026"""
+    """重置密码为默认值 Admin@2026"""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='用户不存在')
     user.password_hash = get_password_hash('Admin@2026')
     db.commit()
     return {'message': '密码已重置为 Admin@2026'}
+
+
+@router.post('/{user_id}/set-password')
+def set_password(
+    user_id: int,
+    payload: SetPasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin_or_pm),
+):
+    """管理员为指定用户设置新密码"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='用户不存在')
+    if len(payload.new_password) < 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='新密码长度不能少于6位')
+    user.password_hash = get_password_hash(payload.new_password)
+    db.commit()
+    return {'message': '密码修改成功'}

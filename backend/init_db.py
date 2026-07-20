@@ -29,7 +29,7 @@ def init_database():
         # 创建管理员账号
         admin_user = User(
             username="admin",
-            password_hash=pwd_context.hash("123456"),
+            password_hash=pwd_context.hash("Admin@2026"),
             real_name="系统管理员",
             role="admin",
             phone="13800000001",
@@ -41,7 +41,7 @@ def init_database():
         # 创建测试项目经理
         pm_user = User(
             username="pm001",
-            password_hash=pwd_context.hash("123456"),
+            password_hash=pwd_context.hash("Admin@2026"),
             real_name="张项目经理",
             role="project_manager",
             phone="13800000002",
@@ -53,8 +53,8 @@ def init_database():
         db.commit()
         print("[OK] 种子数据创建完成")
         print("\n默认账号：")
-        print("  管理员: admin / 123456")
-        print("  项目经理: pm001 / 123456")
+        print("  管理员: admin / Admin@2026")
+        print("  项目经理: pm001 / Admin@2026")
 
     except Exception as e:
         print(f"[ERROR] 初始化失败: {e}")

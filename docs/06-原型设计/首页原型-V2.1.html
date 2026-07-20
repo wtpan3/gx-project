@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高新区"AI+教育"项目交付管理系统 - 首页原型 V2.1</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: rgba(0,0,0,.85); font-size: 14px; }
+  .app { display: flex; min-height: 100vh; }
+
+  /* ===== 侧边栏 ===== */
+  .sider { width: 220px; background: #001529; color: #fff; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .logo { height: 48px; margin: 16px; line-height: 48px; text-align: center; font-size: 16px; font-weight: 600; color: #fff; }
+  .menu { list-style: none; }
+  .menu li { height: 40px; line-height: 40px; padding: 0 24px; color: rgba(255,255,255,.65); cursor: pointer; font-size: 14px; transition: all .2s; }
+  .menu li:hover { color: #fff; }
+  .menu li.active { background: #1677ff; color: #fff; }
+  .menu li .ico { display: inline-block; width: 20px; }
+  .menu .group { color: rgba(255,255,255,.45); font-size: 12px; padding-top: 8px; }
+
+  /* ===== 主区 ===== */
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .header { height: 56px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 10; }
+  .header .title { font-size: 18px; font-weight: 600; }
+  .header .filters { display: flex; gap: 8px; align-items: center; margin-left: 24px; }
+  .header .filters select { border: 1px solid #d9d9d9; border-radius: 6px; padding: 4px 8px; font-size: 13px; color: rgba(0,0,0,.75); background:#fff; }
+  .header .user { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #1677ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .content { padding: 16px; flex: 1; }
+
+  /* ===== 通用卡片 ===== */
+  .panel { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); margin-bottom: 16px; }
+  .panel-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #f0f0f0; }
+  .panel-hd h3 { font-size: 15px; font-weight: 600; }
+  .panel-hd .more { color: #1677ff; font-size: 13px; cursor: pointer; }
+  .panel-bd { padding: 16px; }
+
+  /* ===== ① 顶部卡片区(超宽横向滚动,不压缩卡片) ===== */
+  .stat-scroll { overflow-x: auto; margin-bottom: 16px; }
+  .stat-row { display: flex; gap: 12px; min-width: 980px; }
+  .stat-card { flex: 1; min-width: 120px; background: #fff; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); cursor: pointer; transition: all .2s; border: 1px solid transparent; text-align: center; }
+  .stat-card:hover { box-shadow: 0 4px 12px rgba(22,119,255,.15); border-color: #91caff; transform: translateY(-2px); }
+  .stat-card .label { font-size: 13px; color: rgba(0,0,0,.45); white-space: nowrap; }
+  .stat-card .value { font-size: 28px; font-weight: 700; margin: 6px 0; line-height: 1; }
+  .stat-card .value .unit { font-size: 13px; font-weight: 400; color: rgba(0,0,0,.45); }
+  .stat-card .drill { font-size: 12px; color: #1677ff; white-space: nowrap; }
+  .badge-red { color: #ff4d4f; }
+
+  /* ===== ② 进度区(超宽横向滚动,不压缩栏目) ===== */
+  .progress-scroll { overflow-x: auto; }
+  .progress-row { display: flex; gap: 16px; min-width: 880px; }
+  .progress-col { flex: 1; min-width: 280px; }
+  /* 环形图缩小gap,让数字紧贴;尺寸放大到160px */
+  .donut-wrap { display: flex; align-items: center; gap: 8px; }
+  .donut { width: 160px; height: 160px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative; }
+  .donut::after { content: ''; position: absolute; width: 104px; height: 104px; background: #fff; border-radius: 50%; }
+  .donut .inner { position: relative; z-index: 1; text-align: center; }
+  .donut .inner .pct { font-size: 22px; font-weight: 700; }
+  .donut .inner .sub { font-size: 11px; color: rgba(0,0,0,.45); }
+  .legend { flex: 1; font-size: 12px; }
+  .legend .item { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; cursor: pointer; }
+  .legend .item:hover { color: #1677ff; }
+  .dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+  .legend .label { display: inline-block; width: 4em; }
+  .legend .num { font-weight: 600; margin-left: 2em; }
+  .key-note { font-size: 12px; color: #ff4d4f; margin-top: 8px; }
+
+  .soft-item { margin-bottom: 14px; cursor: pointer; }
+  .soft-item .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 4px; white-space: nowrap; }
+  .soft-item .top > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+  .soft-item .tag { font-size: 11px; padding: 1px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+  .tag-on { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .tag-test { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .tag-dev { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+  .bar { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+  .bar > span { display: block; height: 100%; background: #1677ff; border-radius: 4px; }
+
+  /* 整体进度条(移到顶部) + 公式悬停显示 */
+  .overall-wrap { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0; }
+  .overall { display: flex; align-items: center; gap: 16px; }
+  .overall .big-bar { flex: 1; height: 18px; background: #f0f0f0; border-radius: 9px; overflow: hidden; }
+  .overall .big-bar > span { display: block; height: 100%; background: linear-gradient(90deg,#1677ff,#69b1ff); }
+  .overall .pct { font-size: 24px; font-weight: 700; color: #1677ff; }
+  .formula { font-size: 12px; color: rgba(0,0,0,.45); margin-top: 6px; opacity: 0; transition: opacity .3s; }
+  .overall-wrap:hover .formula { opacity: 1; }
+
+  /* ===== ③ 里程碑区(固定列宽+横向滚动+居中) ===== */
+  .gantt-container { overflow-x: auto; }
+  .gantt { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; min-width: 1060px; }
+  .gantt th, .gantt td { padding: 8px 6px; border-bottom: 1px solid #f5f5f5; }
+  .gantt th { color: rgba(0,0,0,.45); font-weight: 500; background: #fafafa; white-space: nowrap; text-align: center; }
+  .gantt td { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gantt td.stage { width: 120px; }
+  .gantt td.task { width: 180px; }
+  .gantt td.date { font-size: 12px; color: rgba(0,0,0,.65); }
+  .gantt td.date.start { width: 120px; }
+  .gantt td.date.finish { width: 140px; }
+  .gantt td.status { width: 100px; }
+  /* 月份刻度写在表头 */
+  .gantt th.stage { width: 120px; }
+  .gantt th.task { width: 180px; }
+  .gantt th.axis { padding: 0; min-width: 400px; }
+  .gantt th.axis .gbar-months { display: flex; font-size: 11px; color: rgba(0,0,0,.45); font-weight: 500; }
+  .gantt th.axis .gbar-months span { flex: 1; text-align: center; border-left: 1px solid #f0f0f0; padding: 4px 0; }
+  .gantt th.axis .gbar-months span:first-child { border-left: none; }
+  .gbar-cell { position: relative; height: 22px; }
+  .gbar { position: absolute; top: 4px; height: 14px; border-radius: 7px; }
+  .gbar.done { background: #52c41a; }
+  .gbar.doing { background: #fa8c16; }
+  .gbar.todo { background: #d9d9d9; }
+  .st-done { color: #52c41a; font-weight: 600; } 
+  .st-doing { color: #fa8c16; font-weight: 600; } 
+  .st-todo { color: rgba(0,0,0,.45); font-weight: 600; }
+
+  /* ===== ④ 风险区(固定列宽+横向滚动+居中) ===== */
+  .tb-container { overflow-x: auto; }
+  .tb { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; min-width: 1130px; }
+  .tb th, .tb td { padding: 9px 8px; text-align: center; border-bottom: 1px solid #f5f5f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb th { color: rgba(0,0,0,.45); font-weight: 500; background: #fafafa; }
+  .tb col.c-level { width: 90px; }
+  .tb col.c-desc { width: 180px; }
+  .tb col.c-impact { width: 180px; }
+  .tb col.c-plan { width: 180px; }
+  .tb col.c-owner { width: 120px; }
+  .tb col.c-regtime { width: 140px; }
+  .tb col.c-closetime { width: 140px; }
+  .tb col.c-status { width: 100px; }
+  .tb tbody tr { cursor: pointer; }
+  .tb tbody tr:hover { background: #f5faff; }
+  .lv { padding: 1px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .lv-h { background: #fff1f0; color: #ff4d4f; }
+  .lv-m { background: #fff7e6; color: #fa8c16; }
+  .lv-l { background: #f6ffed; color: #52c41a; }
+
+  /* ===== ⑤ 待办区(两个独立框并排等宽) ===== */
+  .todo-panels { display: flex; gap: 16px; align-items: flex-start; }
+  .todo-panels > .panel { flex: 1; width: 0; margin-bottom: 0; }
+  .panel-hd .todo-filters { margin: 0; }
+  .todo-filters { display: flex; gap: 6px; margin-bottom: 12px; }
+  .todo-filters button.sm { padding: 2px 10px; font-size: 12px; }
+  .todo-filters button { padding: 4px 12px; border: 1px solid #d9d9d9; background: #fff; border-radius: 6px; font-size: 13px; color: rgba(0,0,0,.75); cursor: pointer; transition: all .2s; }
+  .todo-filters button.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+  .todo-filters button:hover { border-color: #1677ff; color: #1677ff; }
+  .todo-filters button.active:hover { color: #fff; }
+  .todo-row { display: flex; gap: 16px; }
+  .todo-col { flex: 1; }
+  .todo-item { padding: 10px 0; border-bottom: 1px solid #f5f5f5; display: flex; align-items: flex-start; gap: 8px; }
+  .todo-item .p { font-size: 11px; padding: 1px 6px; border-radius: 4px; flex-shrink: 0; margin-top: 2px; }
+  .p-h { background: #fff1f0; color: #ff4d4f; } .p-m { background: #fff7e6; color: #fa8c16; } .p-l { background: #f6ffed; color: #52c41a; }
+  .todo-item .body { flex: 1; min-width: 0; }
+  .todo-item .body .t { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .todo-item .body .meta { font-size: 12px; color: rgba(0,0,0,.45); margin-top: 2px; }
+  .todo-item .acts { display: flex; gap: 6px; }
+  .btn { font-size: 12px; padding: 2px 10px; border-radius: 4px; border: 1px solid #d9d9d9; background: #fff; cursor: pointer; color: rgba(0,0,0,.75); }
+  .btn:hover { color: #1677ff; border-color: #1677ff; }
+  .btn.disabled { color: rgba(0,0,0,.25); border-color: #f0f0f0; cursor: not-allowed; background: #fafafa; }
+  .role-note { font-size: 12px; color: rgba(0,0,0,.45); margin-top: 4px; }
+
+  .note-tip { background: #e6f4ff; border: 1px solid #91caff; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #1677ff; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="sider">
+    <div class="logo">项目交付管理</div>
+    <ul class="menu">
+      <li class="active"><span class="ico">🏠</span>首页</li>
+      <li><span class="ico">📋</span>项目计划</li>
+      <li><span class="ico">🚚</span>交付进展</li>
+      <li><span class="ico">⚠️</span>风险管理</li>
+      <li><span class="ico">🖥️</span>设备信息</li>
+      <li><span class="ico">📊</span>学校看板</li>
+      <li><span class="ico">📚</span>培训管理</li>
+      <li><span class="ico">📄</span>报告管理</li>
+      <li><span class="ico">🗂️</span>交付材料库</li>
+      <li><span class="ico">🔄</span>项目复盘</li>
+      <li><span class="ico">⚙️</span>系统管理</li>
+    </ul>
+  </aside>
+
+  <!-- 主区 -->
+  <div class="main">
+    <!-- 顶栏 + 全局筛选 -->
+    <header class="header">
+      <div style="display:flex;align-items:center;">
+        <span class="title">高新区"AI+教育"项目交付管理系统</span>
+      </div>
+      <div class="user"><span class="avatar">张</span><span>张项目经理 ▾</span></div>
+    </header>
+
+    <div class="content">
+      <div class="note-tip">原型说明:本页为首页(项目概览)静态原型,数据为示意值。已按要求调整:环形图数字紧贴、软件进度加应用能力服务、整体进度置顶+公式悬停显示、里程碑/风险表结构重构、待办区加筛选框。</div>
+
+      <!-- ① 顶部卡片区(超宽横向滚动) -->
+      <div class="stat-scroll">
+        <div class="stat-row">
+          <div class="stat-card"><div class="label">覆盖学校</div><div class="value">20<span class="unit"> 所</span></div><div class="drill">查看学校 →</div></div>
+          <div class="stat-card"><div class="label">重点学校</div><div class="value badge-red">5<span class="unit"> 所</span></div><div class="drill">查看重点校 →</div></div>
+          <div class="stat-card"><div class="label">系统总数</div><div class="value">6<span class="unit"> 个</span></div><div class="drill">查看系统 →</div></div>
+          <div class="stat-card"><div class="label">设备类型</div><div class="value">12<span class="unit"> 种</span></div><div class="drill">设备字典 →</div></div>
+          <div class="stat-card"><div class="label">产线类型</div><div class="value">3<span class="unit"> 种</span></div><div class="drill">产线字典 →</div></div>
+          <div class="stat-card"><div class="label">外采设备</div><div class="value">8<span class="unit"> 种</span></div><div class="drill">外采清单 →</div></div>
+          <div class="stat-card"><div class="label">硬件总数</div><div class="value">1240<span class="unit"> 台</span></div><div class="drill">设备台账 →</div></div>
+        </div>
+      </div>
+
+      <!-- ② 进度区(整体进度置顶) -->
+      <div class="panel">
+        <div class="panel-hd"><h3>交付进度</h3></div>
+        <div class="panel-bd">
+          <!-- 整体进度 -->
+          <div class="overall-wrap">
+            <div class="overall">
+              <span style="font-weight:600;">项目整体进度</span>
+              <div class="big-bar"><span style="width:68%"></span></div>
+              <span class="pct">68%</span>
+            </div>
+            <div class="formula">= 学校 30%×65% + 硬件 40%×72% + 软件 30%×53%(权重可配置,悬停查看构成明细)</div>
+          </div>
+
+          <div class="progress-scroll">
+          <div class="progress-row">
+            <!-- 学校交付进度 -->
+            <div class="progress-col">
+              <div style="font-weight:600;margin-bottom:12px;">学校交付进度</div>
+              <div class="donut-wrap">
+                <div class="donut" style="background:conic-gradient(#52c41a 0 65%,#1677ff 65% 75%,#fa8c16 75% 85%,#722ed1 85% 95%,#d9d9d9 95% 100%);">
+                  <div class="inner"><div class="pct">65%</div><div class="sub">已完成13所</div></div>
+                </div>
+                <div class="legend">
+                  <div class="item"><span class="dot" style="background:#d9d9d9"></span><span class="label">待启动</span><span class="num">2</span></div>
+                  <div class="item"><span class="dot" style="background:#722ed1"></span><span class="label">装修中</span><span class="num">3</span></div>
+                  <div class="item"><span class="dot" style="background:#fa8c16"></span><span class="label">安装中</span><span class="num">2</span></div>
+                  <div class="item"><span class="dot" style="background:#1677ff"></span><span class="label">调试中</span><span class="num">0</span></div>
+                  <div class="item"><span class="dot" style="background:#13c2c2"></span><span class="label">培训中</span><span class="num">0</span></div>
+                  <div class="item"><span class="dot" style="background:#52c41a"></span><span class="label">已完成</span><span class="num">13</span></div>
+                </div>
+              </div>
+              <div class="key-note">🔴 其中含重点学校 5 所(点击环形下钻筛选列表)</div>
+            </div>
+            <!-- 硬件交付进度 -->
+            <div class="progress-col">
+              <div style="font-weight:600;margin-bottom:12px;">硬件交付进度</div>
+              <div class="donut-wrap">
+                <div class="donut" style="background:conic-gradient(#52c41a 0 72%,#1677ff 72% 82%,#fa8c16 82% 90%,#722ed1 90% 96%,#d9d9d9 96% 100%);">
+                  <div class="inner"><div class="pct">72%</div><div class="sub">已验收</div></div>
+                </div>
+                <div class="legend">
+                  <div class="item"><span class="dot" style="background:#d9d9d9"></span><span class="label">待发货</span><span class="num">45</span></div>
+                  <div class="item"><span class="dot" style="background:#722ed1"></span><span class="label">已到货</span><span class="num">120</span></div>
+                  <div class="item"><span class="dot" style="background:#fa8c16"></span><span class="label">已安装</span><span class="num">180</span></div>
+                  <div class="item"><span class="dot" style="background:#1677ff"></span><span class="label">已调试</span><span class="num">200</span></div>
+                  <div class="item"><span class="dot" style="background:#52c41a"></span><span class="label">运行中</span><span class="num">695</span></div>
+                </div>
+              </div>
+              <div class="key-note" style="color:rgba(0,0,0,.45)">合计 1240 台(点击环形下钻设备台账)</div>
+            </div>
+            <!-- 软件平台交付进度(加应用能力服务) -->
+            <div class="progress-col">
+              <div style="font-weight:600;margin-bottom:12px;">软件平台交付进度</div>
+              <div class="soft-item">
+                <div class="top"><span>数智工作台 <span class="tag tag-on">已上线</span></span><span>80%</span></div>
+                <div class="bar"><span style="width:80%;background:#52c41a"></span></div>
+              </div>
+              <div class="soft-item">
+                <div class="top"><span>教育数据指挥中心 <span class="tag tag-test">测试中</span></span><span>50%</span></div>
+                <div class="bar"><span style="width:50%;background:#fa8c16"></span></div>
+              </div>
+              <div class="soft-item">
+                <div class="top"><span>智能应用创编平台 <span class="tag tag-dev">开发中</span></span><span>30%</span></div>
+                <div class="bar"><span style="width:30%;background:#1677ff"></span></div>
+              </div>
+              <div class="soft-item">
+                <div class="top"><span>应用能力服务 <span class="tag tag-on">已上线</span></span><span>90%</span></div>
+                <div class="bar"><span style="width:90%;background:#52c41a"></span></div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ③ 里程碑区(固定列宽+横向滚动) -->
+      <div class="panel">
+        <div class="panel-hd"><h3>关键里程碑</h3><span class="more">查看完整计划 →</span></div>
+        <div class="panel-bd" style="padding:0;">
+          <div class="gantt-container">
+            <table class="gantt">
+              <thead>
+                <tr>
+                  <th class="stage">阶段</th>
+                  <th class="task">任务</th>
+                  <th class="axis"><div class="gbar-months"><span>7月</span><span>8月</span><span>9月</span><span>10月</span><span>11月</span><span>12月</span></div></th>
+                  <th style="width:120px">计划开始时间</th>
+                  <th style="width:140px">计划完成时间</th>
+                  <th style="width:100px">状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="stage" title="硬件交付">硬件交付</td>
+                  <td class="task" title="硬件到货验收">硬件到货验收</td>
+                  <td class="gbar-cell"><div class="gbar done" style="left:0;width:33%"></div></td>
+                  <td class="date start">2026-07-01</td>
+                  <td class="date finish">2026-08-15</td>
+                  <td class="status st-done">已完成</td>
+                </tr>
+                <tr>
+                  <td class="stage" title="硬件交付">硬件交付</td>
+                  <td class="task" title="加电测试完成">加电测试完成</td>
+                  <td class="gbar-cell"><div class="gbar doing" style="left:16%;width:34%"></div></td>
+                  <td class="date start">2026-08-01</td>
+                  <td class="date finish">2026-09-20</td>
+                  <td class="status st-doing">进行中</td>
+                </tr>
+                <tr>
+                  <td class="stage" title="应用培训">应用培训</td>
+                  <td class="task" title="教师培训完成">教师培训完成</td>
+                  <td class="gbar-cell"><div class="gbar doing" style="left:40%;width:34%"></div></td>
+                  <td class="date start">2026-09-10</td>
+                  <td class="date finish">2026-11-05</td>
+                  <td class="status st-doing">进行中</td>
+                </tr>
+                <tr>
+                  <td class="stage" title="验收移交">验收移交</td>
+                  <td class="task" title="校级验收">校级验收</td>
+                  <td class="gbar-cell"><div class="gbar todo" style="left:66%;width:34%"></div></td>
+                  <td class="date start">2026-11-15</td>
+                  <td class="date finish">2026-12-31</td>
+                  <td class="status st-todo">未开始</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:12px;color:rgba(0,0,0,.45);padding:8px 12px;">图例:<span style="color:#52c41a">■</span>已完成 <span style="color:#fa8c16">■</span>进行中 <span style="color:#d9d9d9">■</span>未开始 · 点击行下钻明细</div>
+        </div>
+      </div>
+
+      <!-- ④ 项目风险跟踪区(字段:等级|描述|影响|应对|责任人|登记时间|计划关闭|状态) -->
+      <div class="panel">
+        <div class="panel-hd"><h3>项目风险跟踪(活跃 8 项)</h3><span class="more">查看全部 →</span></div>
+        <div class="panel-bd" style="padding:0;">
+          <div class="tb-container">
+          <table class="tb">
+            <colgroup>
+              <col class="c-level"><col class="c-desc"><col class="c-impact"><col class="c-plan">
+              <col class="c-owner"><col class="c-regtime"><col class="c-closetime"><col class="c-status">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>等级</th>
+                <th>风险描述</th>
+                <th>风险影响评估</th>
+                <th>应对方案</th>
+                <th>责任人</th>
+                <th>登记时间</th>
+                <th>计划关闭时间</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="lv lv-h">高</span></td>
+                <td title="第二批设备到货延期风险">第二批设备到货延期风险</td>
+                <td title="影响3所学校安装进度">影响3所学校安装进度</td>
+                <td title="协调供应商加急发货">协调供应商加急发货</td>
+                <td>李采购</td>
+                <td>2026-07-15</td>
+                <td>2026-08-05</td>
+                <td>应对中</td>
+              </tr>
+              <tr>
+                <td><span class="lv lv-h">高</span></td>
+                <td title="3所学校装修进度滞后">3所学校装修进度滞后</td>
+                <td title="校级验收延期风险">校级验收延期风险</td>
+                <td title="增派工人,周末赶工">增派工人,周末赶工</td>
+                <td>王工程</td>
+                <td>2026-07-18</td>
+                <td>2026-08-10</td>
+                <td>应对中</td>
+              </tr>
+              <tr>
+                <td><span class="lv lv-m">中</span></td>
+                <td title="教师培训档期与暑假冲突">教师培训档期与暑假冲突</td>
+                <td title="培训参与率可能下降">培训参与率可能下降</td>
+                <td title="调整至9月开学后">调整至9月开学后</td>
+                <td>赵培训</td>
+                <td>2026-07-20</td>
+                <td>2026-08-15</td>
+                <td>已识别</td>
+              </tr>
+              <tr>
+                <td><span class="lv lv-m">中</span></td>
+                <td title="软件模块联调接口不稳定">软件模块联调接口不稳定</td>
+                <td title="上线时间推迟1周">上线时间推迟1周</td>
+                <td title="技术攻坚,每日联调">技术攻坚,每日联调</td>
+                <td>陈研发</td>
+                <td>2026-07-22</td>
+                <td>2026-08-20</td>
+                <td>应对中</td>
+              </tr>
+              <tr>
+                <td><span class="lv lv-l">低</span></td>
+                <td title="部分学校网络带宽不足">部分学校网络带宽不足</td>
+                <td title="系统运行体验下降">系统运行体验下降</td>
+                <td title="协调学校升级专线">协调学校升级专线</td>
+                <td>刘运维</td>
+                <td>2026-07-25</td>
+                <td>2026-09-01</td>
+                <td>已识别</td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+          <div style="font-size:12px;color:rgba(0,0,0,.45);padding:8px 12px;">
+            状态枚举:已识别 / 应对中 / 已关闭(首页不显示) · 排序:高→中→低(等级),应对中 → 已识别(状态),同级同状态按计划关闭时间升序 · 点击行弹出风险详情抽屉
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ 待办区(两个独立框,各自筛选,默认本周) -->
+      <div class="todo-panels">
+        <!-- 项目待办框 -->
+        <div class="panel">
+          <div class="panel-hd">
+            <h3>项目待办(本周 12)</h3>
+            <div class="todo-filters">
+              <button class="sm">本月</button>
+              <button class="sm active">本周</button>
+              <button class="sm">今日</button>
+            </div>
+          </div>
+          <div class="panel-bd">
+            <div class="todo-item">
+              <span class="p p-h">高</span>
+              <div class="body">
+                <div class="t" title="完成 A 校设备安装验收">完成 A 校设备安装验收</div>
+                <div class="meta">负责人:王工程 · 截止 08-05</div>
+              </div>
+              <div class="acts">
+                <button class="btn">指定负责人</button>
+                <button class="btn">编辑</button>
+              </div>
+            </div>
+            <div class="todo-item">
+              <span class="p p-m">中</span>
+              <div class="body">
+                <div class="t" title="第三批设备采购下单">第三批设备采购下单</div>
+                <div class="meta">负责人:李采购 · 截止 08-08</div>
+              </div>
+              <div class="acts">
+                <button class="btn">指定负责人</button>
+                <button class="btn">编辑</button>
+              </div>
+            </div>
+            <div class="todo-item">
+              <span class="p p-m">中</span>
+              <div class="body">
+                <div class="t" title="B 校竣工资料提交">B 校竣工资料提交</div>
+                <div class="meta">负责人:未指定 · 截止 08-12</div>
+              </div>
+              <div class="acts">
+                <button class="btn">指定负责人</button>
+                <button class="btn">编辑</button>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#1677ff;margin-top:8px;cursor:pointer;">查看全部 →</div>
+          </div>
+        </div>
+
+        <!-- 我的待办框 -->
+        <div class="panel">
+          <div class="panel-hd">
+            <h3>我的待办(本周 5)</h3>
+            <div class="todo-filters">
+              <button class="sm">本月</button>
+              <button class="sm active">本周</button>
+              <button class="sm">今日</button>
+            </div>
+          </div>
+          <div class="panel-bd">
+            <div class="todo-item">
+              <span class="p p-h">高</span>
+              <div class="body">
+                <div class="t" title="审核 B 校验收材料">审核 B 校验收材料</div>
+                <div class="meta">截止 08-03</div>
+              </div>
+              <div class="acts">
+                <button class="btn">完成</button>
+                <button class="btn">转办</button>
+              </div>
+            </div>
+            <div class="todo-item">
+              <span class="p p-m">中</span>
+              <div class="body">
+                <div class="t" title="提交 8 月进度周报">提交 8 月进度周报</div>
+                <div class="meta">截止 08-06</div>
+              </div>
+              <div class="acts">
+                <button class="btn">完成</button>
+                <button class="btn">转办</button>
+              </div>
+            </div>
+            <div class="todo-item">
+              <span class="p p-l">低</span>
+              <div class="body">
+                <div class="t" title="更新风险登记表">更新风险登记表</div>
+                <div class="meta">截止 08-10</div>
+              </div>
+              <div class="acts">
+                <button class="btn">完成</button>
+                <button class="btn">转办</button>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#1677ff;margin-top:8px;cursor:pointer;">查看全部 →</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

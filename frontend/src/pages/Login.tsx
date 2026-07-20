@@ -23,6 +23,13 @@ const Login: React.FC = () => {
       });
       const { access_token } = response.data;
       localStorage.setItem('token', access_token);
+      // 获取当前用户信息并缓存（供顶栏显示、权限判断）
+      try {
+        const me = await api.get('/api/v1/auth/me');
+        localStorage.setItem('user', JSON.stringify(me.data));
+      } catch {
+        // 获取用户信息失败不阻断登录
+      }
       message.success('登录成功');
       navigate('/dashboard');
     } catch (error: any) {

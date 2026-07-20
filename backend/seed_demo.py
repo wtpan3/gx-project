@@ -31,19 +31,27 @@ def seed_demo_data():
 
         # 1. 学校(20所,5所重点)
         schools_data = [
-            ('第一中学', '高新区', '高新路1号', '王校长', '13800001001', True),
-            ('第二小学', '高新区', '科技街2号', '李校长', '13800001002', True),
-            ('实验中学', '高新区', '创新大道3号', '张校长', '13800001003', True),
-            ('第三中学', '高新区', '智慧路4号', '赵校长', '13800001004', True),
-            ('外国语学校', '高新区', '国际路5号', '刘校长', '13800001005', True),
+            ('SC001', '第一中学', '高新区', '高新路1号', '王校长', '13800001001', True),
+            ('SC002', '第二小学', '高新区', '科技街2号', '李校长', '13800001002', True),
+            ('SC003', '实验中学', '高新区', '创新大道3号', '张校长', '13800001003', True),
+            ('SC004', '第三中学', '高新区', '智慧路4号', '赵校长', '13800001004', True),
+            ('SC005', '外国语学校', '高新区', '国际路5号', '刘校长', '13800001005', True),
         ]
         for i in range(5, 20):
-            schools_data.append((f'第{i+1}学校', '高新区', f'教育路{i+1}号', f'校长{i+1}', f'1380000100{i+1}', False))
+            schools_data.append((f'SC{i+1:03d}', f'第{i+1}学校', '高新区', f'教育路{i+1}号', f'校长{i+1}', f'1380000100{i+1}', False))
 
         schools = []
-        for name, district, addr, principal, phone, is_priority in schools_data:
-            s = School(name=name, district=district, address=addr, principal=principal,
-                      contact_phone=phone, is_priority=is_priority)
+        for code, full_name, region, addr, contact_person, phone, is_key in schools_data:
+            s = School(
+                code=code,
+                full_name=full_name,
+                region=region,
+                address=addr,
+                contact_person=contact_person,
+                contact_phone=phone,
+                is_key=is_key,
+                campus_manager_id=pm.id if pm else None
+            )
             db.add(s)
             schools.append(s)
         db.flush()
@@ -67,13 +75,14 @@ def seed_demo_data():
         device_types = ['服务器', 'GPU卡', '交换机', '智能黑板', 'VR设备', '机器人', '摄像头', '传感器']
         for i in range(1240):
             d = Device(
-                device_code=f'DEV{i+1:04d}',
                 device_name=f'{device_types[i % len(device_types)]}-{i+1}',
-                device_type=device_types[i % len(device_types)],
                 system_id=systems[i % len(systems)].id,
                 school_id=schools[i % len(schools)].id,
-                status=['待发货', '待入库', '运行中', '已调试'][i % 4],
-                purchase_source='外采' if i % 3 == 0 else '自研'
+                status=['待发货', '已到货', '已安装', '已调试', '运行中'][i % 5],
+                source='三方外采' if i % 3 == 0 else '库存设备',
+                quantity=1,
+                construction_year=2024,
+                type='硬件'
             )
             devices.append(d)
         db.bulk_save_objects(devices)
@@ -87,13 +96,13 @@ def seed_demo_data():
 
         # 5. 软件模块(4个,对应原型)
         modules_data = [
-            ('数智工作台', '已上线', 80, 1),
-            ('教育数据指挥中心', '测试中', 50, 2),
-            ('智能应用创编平台', '开发中', 30, 3),
-            ('应用能力服务', '已上线', 90, 4)
+            ('数智工作台', '上线运行', 80, 1),
+            ('教育数据指挥中心', '软件测试', 50, 2),
+            ('智能应用创编平台', '软件开发', 30, 3),
+            ('应用能力服务', '上线运行', 90, 4)
         ]
-        for name, status, progress, order in modules_data:
-            db.add(SoftwareModule(name=name, online_status=status, progress=progress, sort_order=order))
+        for name, phase, progress, order in modules_data:
+            db.add(SoftwareModule(name=name, phase=phase, progress=progress, sort_order=order))
         print(f"[OK] 插入 {len(modules_data)} 个软件模块")
 
         # 6. WBS任务(L2子阶段4条作为里程碑,L3末级任务30条作为待办)

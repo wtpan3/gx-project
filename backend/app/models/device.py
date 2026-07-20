@@ -20,7 +20,7 @@ class Device(Base):
     school_id = Column(Integer, ForeignKey('schools.id'))
     install_location = Column(String(100))
     status = Column(Enum('待发货', '已到货', '已安装', '已调试', '运行中'))
-    supplier_id = Column(Integer, ForeignKey('suppliers.id'))
+    supplier_id = Column(Integer)
     plan_arrival_date = Column(Date)
     delivery_no = Column(String(50))
     delivery_date = Column(Date)

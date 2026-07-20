@@ -88,9 +88,12 @@ class DashboardService:
             for m in modules
         ]
 
-        # 整体进度(已完成任务数 / 总任务数)
-        total_tasks = db.query(WBSTask).filter(WBSTask.level == 3).count()
-        completed_tasks = db.query(WBSTask).filter(WBSTask.level == 3, WBSTask.status == '已完成').count()
+        # 整体进度(已完成末级任务数 / 总末级任务数,以work_content_l4为末级)
+        total_tasks = db.query(WBSTask).filter(WBSTask.work_content_l4 != '').count()
+        completed_tasks = db.query(WBSTask).filter(
+            WBSTask.work_content_l4 != '',
+            WBSTask.status == '已完成'
+        ).count()
         overall_progress = int((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)
 
         return DeliveryProgress(
@@ -108,13 +111,13 @@ class DashboardService:
     def _get_milestones(db: Session) -> List[Milestone]:
         """关键里程碑(取L2子阶段任务,按计划开始时间排序,最多展示4条)"""
         tasks = db.query(WBSTask).filter(
-            WBSTask.level == 2
+            WBSTask.sub_phase_l2 != ''
         ).order_by(WBSTask.plan_start_date).limit(4).all()
 
         return [
             Milestone(
-                phase=t.phase or '',
-                task=t.task_name,
+                phase=t.project_phase_l1 or '',
+                task=t.sub_phase_l2,
                 plan_start_date=t.plan_start_date,
                 plan_end_date=t.plan_end_date,
                 status=t.status
@@ -172,12 +175,12 @@ class DashboardService:
             next_month = (today.replace(day=28) + timedelta(days=4)).replace(day=1)
             end_date = next_month - timedelta(days=1)
 
-        # 基础查询:末级任务(level=3) + 未完成状态
+        # 基础查询:末级任务(work_content_l4不为空) + 未完成状态
         query = db.query(WBSTask, User.real_name).outerjoin(
             User, WBSTask.assignee_id == User.id
         ).filter(
-            WBSTask.level == 3,
-            WBSTask.status.in_(['未开始', '进行中', '已延期']),
+            WBSTask.work_content_l4 != '',
+            WBSTask.status.in_(['待开始', '进行中', '已延期']),
             WBSTask.plan_end_date >= start_date,
             WBSTask.plan_end_date <= end_date
         )
@@ -192,7 +195,7 @@ class DashboardService:
         return [
             TodoItem(
                 id=t.WBSTask.id,
-                task_name=t.WBSTask.task_name,
+                task_name=t.WBSTask.work_content_l4,
                 priority='中',  # 服务器表无priority字段,默认中
                 assignee_name=t.real_name if scope == 'project' else None,
                 plan_end_date=t.WBSTask.plan_end_date,

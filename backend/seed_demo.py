@@ -17,6 +17,7 @@ from app.models.user import User
 
 def seed_demo_data():
     db = SessionLocal()
+    today = date.today()
     try:
         print("开始插入首页演示数据...")
 
@@ -25,9 +26,11 @@ def seed_demo_data():
             print("[WARN] schools 表已有数据,跳过种子插入")
             return
 
-        # 获取已有用户
+        # 获取已有用户(pm001不存在时用admin作为后备)
         admin = db.query(User).filter(User.username == 'admin').first()
         pm = db.query(User).filter(User.username == 'pm001').first()
+        if not pm:
+            pm = admin  # pm001不存在时使用admin
 
         # 1. 学校(20所,5所重点)
         schools_data = [
@@ -62,8 +65,18 @@ def seed_demo_data():
             ('应用能力服务', '软件'), ('AI算力中心', '硬件'), ('智能交互终端', '硬件')
         ]
         systems = []
-        for name, type_ in systems_data:
-            s = DeviceSystem(name=name, type=type_)
+        for sys_name, type_ in systems_data:
+            s = DeviceSystem(
+                project_name='高新区AI+教育项目',
+                construction_year=2024,
+                system_name=sys_name,
+                device_name=sys_name,
+                brand='标准',
+                model='V1.0',
+                type=type_,
+                unit='套',
+                plan_quantity=1
+            )
             db.add(s)
             systems.append(s)
         db.flush()
@@ -75,14 +88,19 @@ def seed_demo_data():
         device_types = ['服务器', 'GPU卡', '交换机', '智能黑板', 'VR设备', '机器人', '摄像头', '传感器']
         for i in range(1240):
             d = Device(
+                project_name='高新区AI+教育项目',
                 device_name=f'{device_types[i % len(device_types)]}-{i+1}',
+                brand='标准品牌',
+                model=f'型号{i+1}',
+                unit='台',
                 system_id=systems[i % len(systems)].id,
                 school_id=schools[i % len(schools)].id,
                 status=['待发货', '已到货', '已安装', '已调试', '运行中'][i % 5],
                 source='三方外采' if i % 3 == 0 else '库存设备',
                 quantity=1,
                 construction_year=2024,
-                type='硬件'
+                type='硬件',
+                plan_arrival_date=today - timedelta(days=30)
             )
             devices.append(d)
         db.bulk_save_objects(devices)
@@ -105,27 +123,38 @@ def seed_demo_data():
             db.add(SoftwareModule(name=name, phase=phase, progress=progress, sort_order=order))
         print(f"[OK] 插入 {len(modules_data)} 个软件模块")
 
-        # 6. WBS任务(L2子阶段4条作为里程碑,L3末级任务30条作为待办)
-        today = date.today()
+        # 6. WBS任务(5层结构,里程碑取L2子阶段,待办取L4工作内容)
+        # 里程碑数据: (task_code, L1, L2, L3, L4, status, plan_start, plan_end, actual_start, actual_end)
         milestones_data = [
-            ('WBS-L2-001', '硬件到货验收', 2, '硬件交付', schools[0].id, pm.id if pm else None, '中', '已完成',
+            ('WBS-001', '交付实施', '硬件到货验收', '设备到货', '完成硬件到货验收', '已完成',
              today - timedelta(days=90), today - timedelta(days=45), today - timedelta(days=90), today - timedelta(days=46)),
-            ('WBS-L2-002', '加电测试完成', 2, '硬件交付', schools[1].id, pm.id if pm else None, '中', '进行中',
+            ('WBS-002', '交付实施', '加电测试完成', '设备安装', '完成加电测试', '进行中',
              today - timedelta(days=60), today + timedelta(days=20), today - timedelta(days=60), None),
-            ('WBS-L2-003', '教师培训完成', 2, '应用培训', schools[2].id, admin.id if admin else None, '中', '进行中',
+            ('WBS-003', '交付实施', '教师培训完成', '应用培训', '完成教师培训', '进行中',
              today - timedelta(days=20), today + timedelta(days=35), today - timedelta(days=20), None),
-            ('WBS-L2-004', '校级验收', 2, '验收移交', schools[3].id, pm.id if pm else None, '中', '待开始',
+            ('WBS-004', '验收移交', '校级验收', '竣工资料', '完成校级验收', '待开始',
              today + timedelta(days=45), today + timedelta(days=135), None, None),
         ]
         for data in milestones_data:
-            t = WBSTask(task_code=data[0], task_name=data[1], level=data[2], phase=data[3],
-                       school_id=data[4], assignee_id=data[5], priority=data[6], status=data[7],
-                       plan_start_date=data[8], plan_end_date=data[9],
-                       actual_start_date=data[10], actual_end_date=data[11])
+            t = WBSTask(
+                task_code=data[0],
+                project_phase_l1=data[1],
+                sub_phase_l2=data[2],
+                task_package_l3=data[3],
+                work_content_l4=data[4],
+                status=data[5],
+                school_id=schools[0].id,
+                assignee_id=pm.id if pm else (admin.id if admin else None),
+                plan_start_date=data[6],
+                plan_end_date=data[7],
+                actual_start_date=data[8],
+                actual_end_date=data[9],
+                construction_year=2024
+            )
             db.add(t)
         print(f"[OK] 插入 {len(milestones_data)} 条里程碑任务(L2)")
 
-        # L3末级任务(30条,分布本周/本月,用于待办)
+        # L4工作内容(30条,分布本周/本月,用于待办)
         task_names = [
             '完成A校设备安装验收', '第三批设备采购下单', 'B校竣工资料提交', '审核B校验收材料',
             '提交8月进度周报', '更新风险登记表', 'C校网络环境测试', 'D校教师培训排课',
@@ -139,20 +168,21 @@ def seed_demo_data():
         for i, name in enumerate(task_names):
             days_offset = (i % 7) - 3  # 本周内分布
             t = WBSTask(
-                task_code=f'WBS-L3-{i+1:03d}',
-                task_name=name,
-                level=3,
-                phase='交付实施',
+                task_code=f'WBS-T{i+1:03d}',
+                project_phase_l1='交付实施',
+                sub_phase_l2='硬件交付',
+                task_package_l3='设备交付',
+                work_content_l4=name,
                 school_id=schools[i % len(schools)].id,
                 assignee_id=admin.id if i % 2 == 0 else (pm.id if pm else None),
-                priority=['高', '中', '低'][i % 3],
                 status=['待开始', '进行中', '已延期'][i % 3],
                 plan_start_date=today + timedelta(days=days_offset - 2),
                 plan_end_date=today + timedelta(days=days_offset + 3),
-                actual_start_date=today + timedelta(days=days_offset - 2) if i % 3 != 0 else None
+                actual_start_date=today + timedelta(days=days_offset - 2) if i % 3 != 0 else None,
+                construction_year=2024
             )
             db.add(t)
-        print(f"[OK] 插入 {len(task_names)} 条末级任务(L3)")
+        print(f"[OK] 插入 {len(task_names)} 条末级任务(L4)")
 
         # 7. 风险(8条活跃风险)
         risks_data = [
@@ -167,9 +197,16 @@ def seed_demo_data():
         ]
         for data in risks_data:
             r = Risk(
-                risk_code=data[0], risk_level=data[1], description=data[2], impact=data[3],
-                response_plan=data[4], owner_id=data[5], school_id=data[6], status=data[7],
-                registered_at=data[8], plan_close_date=data[9]
+                risk_desc=data[2],
+                impact_description=data[3],
+                response_strategy=data[4],
+                responsible_person_id=data[5],
+                school_id=data[6],
+                status=data[7],
+                risk_level=data[1],
+                probability='中',
+                impact='中',
+                response_deadline=data[9]
             )
             db.add(r)
         print(f"[OK] 插入 {len(risks_data)} 条风险")

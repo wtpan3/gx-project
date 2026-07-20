@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Spin, message } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../services/dashboard';
 import './Dashboard.css';
 
@@ -64,7 +63,6 @@ interface TodoItem {
 }
 
 const Dashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [statCards, setStatCards] = useState<StatCard[]>([]);
   const [deliveryProgress, setDeliveryProgress] = useState<DeliveryProgress | null>(null);
@@ -109,131 +107,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  // 环形图渲染函数
-  const renderDonutChart = (items: ProgressItem[], total: number) => {
-    if (!items || items.length === 0) return null;
-
-    let cumulativePercent = 0;
-    const segments = items.map(item => {
-      const percent = (item.count / total) * 100;
-      const segment = {
-        ...item,
-        percent,
-        startPercent: cumulativePercent
-      };
-      cumulativePercent += percent;
-      return segment;
-    });
-
-    return (
-      <svg viewBox="0 0 42 42" style={{ width: '140px', height: '140px' }}>
-        <circle cx="21" cy="21" r="15.91549430918954" fill="transparent"></circle>
-        {segments.map((seg, idx) => {
-          const offset = 25 - seg.startPercent;
-          return (
-            <circle
-              key={idx}
-              cx="21"
-              cy="21"
-              r="15.91549430918954"
-              fill="transparent"
-              stroke={seg.color}
-              strokeWidth="5"
-              strokeDasharray={`${seg.percent} ${100 - seg.percent}`}
-              strokeDashoffset={offset}
-              style={{ transition: 'stroke-dashoffset 0.3s' }}
-            />
-          );
-        })}
-      </svg>
-    );
-  };
-
-  // 时间轴甘特图渲染
-  const renderGanttBar = (milestone: Milestone) => {
-    if (!milestone.plan_start_date || !milestone.plan_end_date) {
-      return <div style={{ color: '#999', fontSize: 12 }}>-</div>;
-    }
-
-    const start = new Date(milestone.plan_start_date);
-    const end = new Date(milestone.plan_end_date);
-    const today = new Date();
-
-    // 计算时间范围（以所有里程碑的最早和最晚日期为准）
-    const allDates = milestones.flatMap(m =>
-      [m.plan_start_date, m.plan_end_date].filter(Boolean).map(d => new Date(d!))
-    );
-    const minDate = new Date(Math.min(...allDates.map(d => d.getTime())));
-    const maxDate = new Date(Math.max(...allDates.map(d => d.getTime())));
-    const totalDays = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    const startOffset = ((start.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)) / totalDays * 100;
-    const duration = ((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) / totalDays * 100;
-
-    let barColor = '#1677ff';
-    if (milestone.status === '已完成') barColor = '#52c41a';
-    else if (milestone.status === '进行中') barColor = '#fa8c16';
-    else if (milestone.status === '已延期') barColor = '#ff4d4f';
-
-    return (
-      <div style={{ position: 'relative', height: '24px', background: '#f5f5f5', borderRadius: '4px' }}>
-        <div
-          style={{
-            position: 'absolute',
-            left: `${startOffset}%`,
-            width: `${duration}%`,
-            height: '100%',
-            background: barColor,
-            borderRadius: '4px',
-            minWidth: '2px'
-          }}
-        />
-      </div>
-    );
-  };
-
-  // 卡片点击跳转
-  const handleCardClick = (label: string) => {
-    const routeMap: Record<string, string> = {
-      '覆盖学校': '/schools',
-      '重点学校': '/schools?filter=key',
-      '系统总数': '/device-systems',
-      '设备类型': '/devices',
-      '产线类型': '/production-lines',
-      '外采设备': '/devices?filter=external',
-      '硬件总数': '/devices'
-    };
-    const route = routeMap[label];
-    if (route) {
-      navigate(route);
-    }
-  };
-
-  // 辅助函数
-  const getStatusClass = (status: string) => {
-    if (status === '已完成') return 'done';
-    if (status === '进行中') return 'doing';
-    return 'todo';
-  };
-
-  const getLevelClass = (level: string) => {
-    if (level === '高') return 'high';
-    if (level === '中') return 'mid';
-    return 'low';
-  };
-
-  const getStatusTagClass = (phase: string) => {
-    if (phase === '上线运行') return 'on';
-    if (phase === '软件测试') return 'test';
-    return 'dev';
-  };
-
-  const getProgressColor = (phase: string) => {
-    if (phase === '上线运行') return '#52c41a';
-    if (phase === '软件测试') return '#fa8c16';
-    return '#1677ff';
-  };
-
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" /></div>;
   }
@@ -244,7 +117,7 @@ const Dashboard: React.FC = () => {
       <div className="stat-scroll">
         <div className="stat-row">
           {statCards.map((card, idx) => (
-            <div key={idx} className="stat-card" onClick={() => handleCardClick(card.label)}>
+            <div key={idx} className="stat-card">
               <div className="label">{card.label}</div>
               <div className={`value ${card.badge_red ? 'badge-red' : ''}`}>
                 {card.value}<span className="unit"> {card.unit}</span>
@@ -280,10 +153,9 @@ const Dashboard: React.FC = () => {
                   <div style={{ fontWeight: 600, marginBottom: 12 }}>学校交付进度</div>
                   <div className="donut-wrap">
                     <div className="donut">
-                      {renderDonutChart(deliveryProgress.school_progress, deliveryProgress.school_total)}
                       <div className="inner">
                         <div className="pct">{Math.round((deliveryProgress.school_completed / deliveryProgress.school_total) * 100)}%</div>
-                        <div className="sub">{deliveryProgress.school_completed}/{deliveryProgress.school_total}</div>
+                        <div className="sub">已完成{deliveryProgress.school_completed}所</div>
                       </div>
                     </div>
                     <div className="legend">
@@ -303,10 +175,9 @@ const Dashboard: React.FC = () => {
                   <div style={{ fontWeight: 600, marginBottom: 12 }}>硬件交付进度</div>
                   <div className="donut-wrap">
                     <div className="donut">
-                      {renderDonutChart(deliveryProgress.hardware_progress, deliveryProgress.hardware_total)}
                       <div className="inner">
                         <div className="pct">{Math.round((deliveryProgress.hardware_completed / deliveryProgress.hardware_total) * 100)}%</div>
-                        <div className="sub">{deliveryProgress.hardware_completed}/{deliveryProgress.hardware_total}</div>
+                        <div className="sub">已验收{deliveryProgress.hardware_completed}台</div>
                       </div>
                     </div>
                     <div className="legend">
@@ -352,22 +223,22 @@ const Dashboard: React.FC = () => {
           <table className="gantt">
             <thead>
               <tr>
-                <th style={{ width: 100 }}>阶段</th>
-                <th style={{ width: 140 }}>任务</th>
-                <th style={{ minWidth: 300 }}>时间轴</th>
-                <th style={{ width: 110 }}>计划开始</th>
-                <th style={{ width: 110 }}>计划完成</th>
-                <th style={{ width: 80 }}>状态</th>
+                <th className="stage">阶段</th>
+                <th className="task">任务</th>
+                <th className="axis">时间轴</th>
+                <th style={{ width: 120 }}>计划开始时间</th>
+                <th style={{ width: 140 }}>计划完成时间</th>
+                <th style={{ width: 100 }}>状态</th>
               </tr>
             </thead>
             <tbody>
               {milestones.map((m, idx) => (
                 <tr key={idx}>
-                  <td style={{ textAlign: 'left', paddingLeft: 8 }} title={m.phase}>{m.phase}</td>
-                  <td style={{ textAlign: 'left' }} title={m.task}>{m.task}</td>
-                  <td style={{ padding: '8px 12px' }}>{renderGanttBar(m)}</td>
-                  <td style={{ fontSize: 12 }}>{m.plan_start_date || '-'}</td>
-                  <td style={{ fontSize: 12 }}>{m.plan_end_date || '-'}</td>
+                  <td className="stage" title={m.phase}>{m.phase}</td>
+                  <td className="task" title={m.task}>{m.task}</td>
+                  <td className="gbar-cell"></td>
+                  <td className="date start">{m.plan_start_date || '-'}</td>
+                  <td className="date finish">{m.plan_end_date || '-'}</td>
                   <td className={`status st-${getStatusClass(m.status)}`}>{m.status}</td>
                 </tr>
               ))}
@@ -426,40 +297,25 @@ const Dashboard: React.FC = () => {
         <Card
           title="项目待办"
           extra={
-            <div style={{ display: 'flex', gap: 8 }}>
-              {['today', 'week', 'month'].map(r => (
-                <span
+            <div className="filter-btns">
+              {['month', 'week', 'today'].map(r => (
+                <button
                   key={r}
-                  style={{
-                    cursor: 'pointer',
-                    color: projectTodoRange === r ? '#1677ff' : '#999',
-                    fontWeight: projectTodoRange === r ? 600 : 400
-                  }}
-                  onClick={() => {
-                    setProjectTodoRange(r);
-                    fetchTodos('project', r);
-                  }}
+                  className={projectTodoRange === r ? 'active' : ''}
+                  onClick={() => { setProjectTodoRange(r); fetchTodos('project', r); }}
                 >
-                  {r === 'today' ? '今日' : r === 'week' ? '本周' : '本月'}
-                </span>
+                  {r === 'month' ? '本月' : r === 'week' ? '本周' : '今日'}
+                </button>
               ))}
             </div>
           }
-          style={{ flex: 1 }}
         >
           <div className="todo-list">
             {projectTodos.map(t => (
               <div key={t.id} className="todo-item">
-                <div className="left">
-                  <span className={`priority priority-${t.priority === '高' ? 'high' : t.priority === '中' ? 'mid' : 'low'}`}>
-                    {t.priority}
-                  </span>
-                  <span className="name" title={t.task_name}>{t.task_name}</span>
-                  {t.assignee_name && <span className="person">{t.assignee_name}</span>}
-                </div>
-                <div className="right">
-                  <span className="date">{t.plan_end_date}</span>
-                  <span className={`st st-${getStatusClass(t.status)}`}>{t.status}</span>
+                <div><strong>{t.task_name}</strong></div>
+                <div style={{ fontSize: 12, color: '#999' }}>
+                  负责人: {t.assignee_name || '未指定'} | 截止: {t.plan_end_date || '-'}
                 </div>
               </div>
             ))}
@@ -471,40 +327,24 @@ const Dashboard: React.FC = () => {
         <Card
           title="我的待办"
           extra={
-            <div style={{ display: 'flex', gap: 8 }}>
-              {['today', 'week', 'month'].map(r => (
-                <span
+            <div className="filter-btns">
+              {['month', 'week', 'today'].map(r => (
+                <button
                   key={r}
-                  style={{
-                    cursor: 'pointer',
-                    color: myTodoRange === r ? '#1677ff' : '#999',
-                    fontWeight: myTodoRange === r ? 600 : 400
-                  }}
-                  onClick={() => {
-                    setMyTodoRange(r);
-                    fetchTodos('mine', r);
-                  }}
+                  className={myTodoRange === r ? 'active' : ''}
+                  onClick={() => { setMyTodoRange(r); fetchTodos('mine', r); }}
                 >
-                  {r === 'today' ? '今日' : r === 'week' ? '本周' : '本月'}
-                </span>
+                  {r === 'month' ? '本月' : r === 'week' ? '本周' : '今日'}
+                </button>
               ))}
             </div>
           }
-          style={{ flex: 1 }}
         >
           <div className="todo-list">
             {myTodos.map(t => (
               <div key={t.id} className="todo-item">
-                <div className="left">
-                  <span className={`priority priority-${t.priority === '高' ? 'high' : t.priority === '中' ? 'mid' : 'low'}`}>
-                    {t.priority}
-                  </span>
-                  <span className="name" title={t.task_name}>{t.task_name}</span>
-                </div>
-                <div className="right">
-                  <span className="date">{t.plan_end_date}</span>
-                  <span className={`st st-${getStatusClass(t.status)}`}>{t.status}</span>
-                </div>
+                <div><strong>{t.task_name}</strong></div>
+                <div style={{ fontSize: 12, color: '#999' }}>截止: {t.plan_end_date || '-'}</div>
               </div>
             ))}
             {myTodos.length === 0 && <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>暂无待办</div>}
@@ -513,6 +353,31 @@ const Dashboard: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// 辅助函数
+const getStatusTagClass = (status: string) => {
+  if (status === '已上线') return 'on';
+  if (status === '测试中') return 'test';
+  return 'dev';
+};
+
+const getProgressColor = (status: string) => {
+  if (status === '已上线') return '#52c41a';
+  if (status === '测试中') return '#fa8c16';
+  return '#1677ff';
+};
+
+const getStatusClass = (status: string) => {
+  if (status === '已完成') return 'done';
+  if (status === '进行中') return 'doing';
+  return 'todo';
+};
+
+const getLevelClass = (level: string) => {
+  if (level === '高') return 'h';
+  if (level === '中') return 'm';
+  return 'l';
 };
 
 export default Dashboard;

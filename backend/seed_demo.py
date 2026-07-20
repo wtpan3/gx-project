@@ -167,6 +167,20 @@ def seed_demo_data():
         ]
         for i, name in enumerate(task_names):
             days_offset = (i % 7) - 3  # 本周内分布
+            # 调整状态分布：50%已完成，30%进行中，20%待开始
+            if i < 15:  # 前15个已完成(50%)
+                status = '已完成'
+                actual_start = today + timedelta(days=days_offset - 10)
+                actual_end = today + timedelta(days=days_offset - 2)
+            elif i < 24:  # 中间9个进行中(30%)
+                status = '进行中'
+                actual_start = today + timedelta(days=days_offset - 5)
+                actual_end = None
+            else:  # 最后6个待开始(20%)
+                status = '待开始'
+                actual_start = None
+                actual_end = None
+
             t = WBSTask(
                 task_code=f'WBS-T{i+1:03d}',
                 project_phase_l1='交付实施',
@@ -175,10 +189,11 @@ def seed_demo_data():
                 work_content_l4=name,
                 school_id=schools[i % len(schools)].id,
                 assignee_id=admin.id if i % 2 == 0 else (pm.id if pm else None),
-                status=['待开始', '进行中', '已延期'][i % 3],
+                status=status,
                 plan_start_date=today + timedelta(days=days_offset - 2),
                 plan_end_date=today + timedelta(days=days_offset + 3),
-                actual_start_date=today + timedelta(days=days_offset - 2) if i % 3 != 0 else None,
+                actual_start_date=actual_start,
+                actual_end_date=actual_end,
                 construction_year=2024
             )
             db.add(t)

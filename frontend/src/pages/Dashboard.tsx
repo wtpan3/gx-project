@@ -18,7 +18,7 @@ interface ProgressItem {
 
 interface SoftwareModuleProgress {
   name: string;
-  online_status: string;
+  phase: string;
   progress: number;
 }
 
@@ -200,12 +200,12 @@ const Dashboard: React.FC = () => {
                       <div key={idx} className="soft-item">
                         <div className="top">
                           <span>
-                            {mod.name} <span className={`tag tag-${getStatusTagClass(mod.online_status)}`}>{mod.online_status}</span>
+                            {mod.name} <span className={`tag tag-${getStatusTagClass(mod.phase)}`}>{mod.phase}</span>
                           </span>
                           <span>{mod.progress}%</span>
                         </div>
                         <div className="bar">
-                          <span style={{ width: `${mod.progress}%`, background: getProgressColor(mod.online_status) }}></span>
+                          <span style={{ width: `${mod.progress}%`, background: getProgressColor(mod.phase) }}></span>
                         </div>
                       </div>
                     ))}

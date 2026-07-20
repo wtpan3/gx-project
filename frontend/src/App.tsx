@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -21,28 +20,32 @@ function App() {
             </PrivateRoute>
           }
         >
+          {/* 首页 */}
           <Route path="/dashboard" element={<Dashboard />} />
+
+          {/* 业务模块 */}
+          <Route path="/project-plan" element={<ProjectPlan />} />
+          <Route path="/delivery-progress" element={<Placeholder />} />
+          <Route path="/risk-management" element={<Placeholder />} />
+          <Route path="/device-info" element={<Placeholder />} />
+          <Route path="/school-dashboard" element={<Placeholder />} />
+          <Route path="/training-management" element={<Placeholder />} />
+          <Route path="/report-management" element={<Placeholder />} />
+          <Route path="/material-library" element={<Placeholder />} />
+          <Route path="/project-review" element={<Placeholder />} />
+
+          {/* 系统管理模块 */}
           <Route path="/users" element={<UserManagement />} />
-          {/* 以下为待开发模块，先用占位页 */}
           <Route path="/schools" element={<Placeholder />} />
           <Route path="/device-systems" element={<Placeholder />} />
           <Route path="/suppliers" element={<Placeholder />} />
+          <Route path="/production-lines" element={<Placeholder />} />
           <Route path="/templates" element={<Placeholder />} />
-          <Route path="/dict" element={<Placeholder />} />
+          <Route path="/dict-items" element={<Placeholder />} />
           <Route path="/project-info" element={<Placeholder />} />
-          <Route path="/logs" element={<Placeholder />} />
-          <Route path="/plans" element={<ProjectPlan />} />
-          <Route path="/devices" element={<Placeholder />} />
-          <Route path="/delivery" element={<Placeholder />} />
-          <Route path="/trainings" element={<Placeholder />} />
-          <Route path="/risks" element={<Placeholder />} />
-          <Route path="/reports" element={<Placeholder />} />
-          <Route path="/school-board" element={<Placeholder />} />
-          <Route path="/materials" element={<Placeholder />} />
-          <Route path="/review" element={<Placeholder />} />
+          <Route path="/operation-logs" element={<Placeholder />} />
         </Route>
         <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
   );

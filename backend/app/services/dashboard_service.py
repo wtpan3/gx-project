@@ -66,8 +66,8 @@ class DashboardService:
             ProgressItem(label='装修中', count=3, color='#722ed1'),
             ProgressItem(label='安装中', count=2, color='#fa8c16'),
             ProgressItem(label='调试中', count=0, color='#1677ff'),
-            ProgressItem(label='培训中', count=0, color='#d9d9d9'),
-            ProgressItem(label='待启动', count=total_schools - completed_schools - 5, color='#d9d9d9'),
+            ProgressItem(label='培训中', count=0, color='#faad14'),
+            ProgressItem(label='待启动', count=total_schools - completed_schools - 5, color='#8c8c8c'),
         ]
 
         # 硬件进度(按设备状态分组)
@@ -77,6 +77,7 @@ class DashboardService:
         hardware_progress = [
             ProgressItem(label='待发货', count=status_map.get('待发货', 0), color='#d9d9d9'),
             ProgressItem(label='已到货', count=status_map.get('已到货', 0), color='#1677ff'),
+            ProgressItem(label='已安装', count=status_map.get('已安装', 0), color='#13c2c2'),
             ProgressItem(label='已调试', count=status_map.get('已调试', 0), color='#fa8c16'),
             ProgressItem(label='运行中', count=status_map.get('运行中', 0), color='#52c41a'),
         ]

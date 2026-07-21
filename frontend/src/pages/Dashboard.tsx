@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, Spin, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../services/dashboard';
@@ -96,7 +96,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const fetchTodos = async (scope: string, range: string) => {
+  const fetchTodos = useCallback(async (scope: string, range: string) => {
     try {
       const data = await dashboardService.getTodos(scope, range);
       if (scope === 'project') {
@@ -107,10 +107,10 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       message.error(`加载${scope === 'project' ? '项目' : '我的'}待办失败`);
     }
-  };
+  }, []);
 
-  // 环形图渲染函数
-  const renderDonutChart = (items: ProgressItem[], total: number) => {
+  // 环形图渲染函数 - 使用useMemo优化
+  const renderDonutChart = useCallback((items: ProgressItem[], total: number) => {
     if (!items || items.length === 0) return null;
 
     let cumulativePercent = 0;
@@ -127,9 +127,10 @@ const Dashboard: React.FC = () => {
 
     return (
       <svg viewBox="0 0 42 42" style={{ width: '140px', height: '140px' }}>
-        <circle cx="21" cy="21" r="15.91549430918954" fill="transparent"></circle>
         {segments.map((seg, idx) => {
-          const offset = 25 - seg.startPercent;
+          const circumference = 2 * Math.PI * 15.91549430918954;
+          const offset = circumference * (0.25 - seg.startPercent / 100);
+          const dashLength = circumference * (seg.percent / 100);
           return (
             <circle
               key={idx}
@@ -139,18 +140,19 @@ const Dashboard: React.FC = () => {
               fill="transparent"
               stroke={seg.color}
               strokeWidth="5"
-              strokeDasharray={`${seg.percent} ${100 - seg.percent}`}
+              strokeDasharray={`${dashLength} ${circumference}`}
               strokeDashoffset={offset}
-              style={{ transition: 'stroke-dashoffset 0.3s' }}
+              transform="rotate(-90 21 21)"
+              style={{ transition: 'all 0.3s' }}
             />
           );
         })}
       </svg>
     );
-  };
+  }, []);
 
   // 时间轴甘特图渲染
-  const renderGanttBar = (milestone: Milestone) => {
+  const renderGanttBar = useCallback((milestone: Milestone) => {
     if (!milestone.plan_start_date || !milestone.plan_end_date) {
       return <div style={{ color: '#999', fontSize: 12 }}>-</div>;
     }
@@ -190,10 +192,10 @@ const Dashboard: React.FC = () => {
         />
       </div>
     );
-  };
+  }, [milestones]);
 
   // 卡片点击跳转
-  const handleCardClick = (label: string) => {
+  const handleCardClick = useCallback((label: string) => {
     const routeMap: Record<string, string> = {
       '覆盖学校': '/schools',
       '重点学校': '/schools?filter=key',
@@ -207,7 +209,7 @@ const Dashboard: React.FC = () => {
     if (route) {
       navigate(route);
     }
-  };
+  }, [navigate]);
 
   // 辅助函数
   const getStatusClass = (status: string) => {
@@ -217,9 +219,9 @@ const Dashboard: React.FC = () => {
   };
 
   const getLevelClass = (level: string) => {
-    if (level === '高') return 'high';
-    if (level === '中') return 'mid';
-    return 'low';
+    if (level === '高') return 'h';
+    if (level === '中') return 'm';
+    return 'l';
   };
 
   const getStatusTagClass = (phase: string) => {
@@ -460,6 +462,7 @@ const Dashboard: React.FC = () => {
                 <div className="right">
                   <span className="date">{t.plan_end_date}</span>
                   <span className={`st st-${getStatusClass(t.status)}`}>{t.status}</span>
+                  <span className="edit-btn" onClick={() => message.info(`编辑待办: ${t.task_name}`)}>编辑</span>
                 </div>
               </div>
             ))}
@@ -504,6 +507,7 @@ const Dashboard: React.FC = () => {
                 <div className="right">
                   <span className="date">{t.plan_end_date}</span>
                   <span className={`st st-${getStatusClass(t.status)}`}>{t.status}</span>
+                  <span className="edit-btn" onClick={() => message.info(`编辑待办: ${t.task_name}`)}>编辑</span>
                 </div>
               </div>
             ))}

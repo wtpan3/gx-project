@@ -441,3 +441,32 @@
 .todo-item:hover {
   background: #e6f4ff;
 }
+
+.todo-item .left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.todo-item .right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.todo-item .right .edit-btn {
+  color: #1677ff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.todo-item .right .edit-btn:hover {
+  background: #1677ff;
+  color: #fff;
+}

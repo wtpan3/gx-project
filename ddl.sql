@@ -40,6 +40,7 @@ CREATE TABLE schools (
     contact_phone VARCHAR(20) NOT NULL COMMENT '校方联系电话',
     project_status ENUM('未启动','实施中','试运行','已验收','维保中') DEFAULT '未启动' COMMENT '项目状态',
     remark TEXT COMMENT '备注',
+    is_key TINYINT(1) NOT NULL DEFAULT 0 COMMENT '是否重点学校',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (campus_manager_id) REFERENCES users(id) ON DELETE SET NULL
@@ -141,7 +142,7 @@ CREATE TABLE wbs_tasks (
     status ENUM('待开始','进行中','已完成','已延期','待补材料') NOT NULL COMMENT '状态',
     actual_start_date DATE COMMENT '实际开始时间',
     actual_end_date DATE COMMENT '实际结束时间',
-    assignee_id INT NOT NULL COMMENT '责任人',
+    responsible_person_id INT NOT NULL COMMENT '责任人',
     progress_note TEXT COMMENT '进展说明',
     deliverables VARCHAR(255) COMMENT '输出物',
     school_id INT NOT NULL COMMENT '关联学校',
@@ -150,7 +151,7 @@ CREATE TABLE wbs_tasks (
     is_orphan TINYINT DEFAULT 0 COMMENT '是否孤儿任务',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (assignee_id) REFERENCES users(id),
+    FOREIGN KEY (responsible_person_id) REFERENCES users(id),
     FOREIGN KEY (school_id) REFERENCES schools(id)
 ) COMMENT='WBS任务表';
 

@@ -2,7 +2,10 @@
 import axios from 'axios';
 import { WbsTask, WbsTaskListResponse, WbsTaskCreate } from '../types/wbs';
 
-const API_BASE = 'http://127.0.0.1:8000/api/v1';
+// 与 api.ts 保持一致：生产环境读空值→相对路径(走Nginx反代)，开发环境读 127.0.0.1
+const API_BASE = (process.env.REACT_APP_API_URL !== undefined
+  ? process.env.REACT_APP_API_URL
+  : 'http://127.0.0.1:8000') + '/api/v1';
 
 export const wbsApi = {
   // 获取任务列表

@@ -69,7 +69,7 @@ const MainLayout: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider width={220} theme="dark">
+      <Sider width={220} theme="dark" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, overflowY: 'auto' }}>
         <div style={{ height: 48, margin: 16, lineHeight: '48px', textAlign: 'center', fontSize: 16, fontWeight: 600, color: '#fff' }}>
           GX项目管理
         </div>
@@ -82,8 +82,8 @@ const MainLayout: React.FC = () => {
           onClick={({ key }) => navigate(key)}
         />
       </Sider>
-      <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+      <Layout style={{ marginLeft: 220 }}>
+        <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 10 }}>
           <span style={{ fontSize: 18, fontWeight: 600 }}>高新区"AI+教育"项目交付管理系统</span>
           <Dropdown menu={userMenu} placement="bottomRight">
             <Space style={{ cursor: 'pointer' }}>
@@ -92,7 +92,7 @@ const MainLayout: React.FC = () => {
             </Space>
           </Dropdown>
         </Header>
-        <Content style={{ margin: 0, background: '#f0f2f5' }}>
+        <Content style={{ margin: 0, background: '#f0f2f5', minHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}>
           <Outlet />
         </Content>
       </Layout>

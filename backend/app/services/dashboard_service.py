@@ -7,7 +7,7 @@ from sqlalchemy import func, and_
 from app.models.school import School
 from app.models.device_system import DeviceSystem
 from app.models.device import Device
-from app.models.wbs_task import WBSTask
+from app.models.wbs_task import WbsTask
 from app.models.risk import Risk
 from app.models.production_line import ProductionLine
 from app.models.software_module import SoftwareModule
@@ -90,10 +90,10 @@ class DashboardService:
         ]
 
         # 整体进度(已完成末级任务数 / 总末级任务数,以work_content_l4为末级)
-        total_tasks = db.query(WBSTask).filter(WBSTask.work_content_l4 != '').count()
-        completed_tasks = db.query(WBSTask).filter(
-            WBSTask.work_content_l4 != '',
-            WBSTask.status == '已完成'
+        total_tasks = db.query(WbsTask).filter(WbsTask.work_content_l4 != '').count()
+        completed_tasks = db.query(WbsTask).filter(
+            WbsTask.work_content_l4 != '',
+            WbsTask.status == '已完成'
         ).count()
         overall_progress = int((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0)
 
@@ -111,9 +111,9 @@ class DashboardService:
     @staticmethod
     def _get_milestones(db: Session) -> List[Milestone]:
         """关键里程碑(取L2子阶段任务,按计划开始时间排序,最多展示4条)"""
-        tasks = db.query(WBSTask).filter(
-            WBSTask.sub_phase_l2 != ''
-        ).order_by(WBSTask.plan_start_date).limit(4).all()
+        tasks = db.query(WbsTask).filter(
+            WbsTask.sub_phase_l2 != ''
+        ).order_by(WbsTask.plan_start_date).limit(4).all()
 
         return [
             Milestone(
@@ -177,29 +177,29 @@ class DashboardService:
             end_date = next_month - timedelta(days=1)
 
         # 基础查询:末级任务(work_content_l4不为空) + 未完成状态
-        query = db.query(WBSTask, User.real_name).outerjoin(
-            User, WBSTask.assignee_id == User.id
+        query = db.query(WbsTask, User.real_name).outerjoin(
+            User, WbsTask.responsible_person_id == User.id
         ).filter(
-            WBSTask.work_content_l4 != '',
-            WBSTask.status.in_(['待开始', '进行中', '已延期']),
-            WBSTask.plan_end_date >= start_date,
-            WBSTask.plan_end_date <= end_date
+            WbsTask.work_content_l4 != '',
+            WbsTask.status.in_(['待开始', '进行中', '已延期']),
+            WbsTask.plan_end_date >= start_date,
+            WbsTask.plan_end_date <= end_date
         )
 
         # scope筛选
         if scope == 'mine' and current_user_id:
-            query = query.filter(WBSTask.assignee_id == current_user_id)
+            query = query.filter(WbsTask.responsible_person_id == current_user_id)
 
         # 排序:截止日期升序
-        tasks = query.order_by(WBSTask.plan_end_date).all()
+        tasks = query.order_by(WbsTask.plan_end_date).all()
 
         return [
             TodoItem(
-                id=t.WBSTask.id,
-                task_name=t.WBSTask.work_content_l4,
+                id=t.WbsTask.id,
+                task_name=t.WbsTask.work_content_l4,
                 priority='中',  # 服务器表无priority字段,默认中
                 assignee_name=t.real_name if scope == 'project' else None,
-                plan_end_date=t.WBSTask.plan_end_date,
-                status=t.WBSTask.status
+                plan_end_date=t.WbsTask.plan_end_date,
+                status=t.WbsTask.status
             ) for t in tasks
         ]

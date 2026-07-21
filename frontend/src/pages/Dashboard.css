@@ -109,6 +109,7 @@
   display: flex;
   gap: 16px;
   min-width: 880px;
+  align-items: flex-start;
 }
 
 .progress-col {
@@ -116,15 +117,17 @@
   min-width: 280px;
 }
 
+/* 环形图容器:与软件进度条顶部对齐 */
 .donut-wrap {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
+  margin-top: -6px;
 }
 
 .donut {
-  width: 140px;
-  height: 140px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   position: relative;
   flex-shrink: 0;
@@ -137,6 +140,8 @@
   position: absolute;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .donut .inner {
@@ -149,12 +154,14 @@
   font-size: 24px;
   font-weight: 600;
   color: #1677ff;
+  line-height: 1.2;
 }
 
 .donut .inner .sub {
   font-size: 12px;
   color: rgba(0, 0, 0, 0.45);
-  margin-top: 4px;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 .legend {
@@ -173,10 +180,15 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* label 占固定宽度，数字紧跟其后（不再推到最右边缘） */
+.legend-item span:nth-child(2) {
+  width: 72px;
 }
 
 .legend-item span:last-child {
-  margin-left: auto;
   font-weight: 600;
 }
 
@@ -226,6 +238,12 @@
   border: 1px solid #ffd591;
 }
 
+.tag-req {
+  background: #f5f5f5;
+  color: #8c8c8c;
+  border: 1px solid #d9d9d9;
+}
+
 .tag-dev {
   background: #e6f4ff;
   color: #1677ff;
@@ -268,7 +286,7 @@
 
 .gantt th {
   color: rgba(0, 0, 0, 0.45);
-  font-weight: 500;
+  font-weight: 600;
   background: #fafafa;
   white-space: nowrap;
 }
@@ -352,7 +370,7 @@
 
 .tb th {
   color: rgba(0, 0, 0, 0.45);
-  font-weight: 500;
+  font-weight: 600;
   background: #fafafa;
 }
 
@@ -391,11 +409,21 @@
 .todo-panels {
   display: flex;
   gap: 16px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
-.todo-panels > div {
+/* 两框均分页面且等高 */
+.todo-panels > .ant-card {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.todo-panels > .ant-card .ant-card-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .filter-btns {
@@ -424,49 +452,196 @@
   color: #1677ff;
 }
 
+/* 待办表头 */
+.todo-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #fafafa;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.65);
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+/* 统一列宽(表头与内容行共用,保证对齐) */
+.col-priority {
+  width: 36px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.col-name {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.col-person {
+  width: 80px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.col-date {
+  width: 85px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.col-action-project {
+  width: 140px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.col-action-mine {
+  width: 110px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+/* 待办列表:固定高度(接近正方形),内容超出可滚动、内容少时不塌缩 */
 .todo-list {
-  max-height: 400px;
+  height: 320px;
   overflow-y: auto;
 }
 
+.todo-empty {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+
 .todo-item {
+  display: flex;
+  align-items: center;
   padding: 8px 12px;
-  border-left: 3px solid #1677ff;
+  border-left: 3px solid #d9d9d9;
   background: #fafafa;
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  gap: 12px;
+}
+
+/* 操作列按钮居中排列 */
+.todo-item .col-action-project,
+.todo-item .col-action-mine {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.todo-item.lv-high {
+  border-left-color: #ff4d4f;
+}
+
+.todo-item.lv-mid {
+  border-left-color: #fa8c16;
+}
+
+.todo-item.lv-low {
+  border-left-color: #52c41a;
 }
 
 .todo-item:hover {
   background: #e6f4ff;
 }
 
-.todo-item .left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
+.todo-item .priority {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.todo-item .priority-high {
+  background: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7;
+}
+
+.todo-item .priority-mid {
+  background: #fff7e6;
+  color: #fa8c16;
+  border: 1px solid #ffd591;
+}
+
+.todo-item .priority-low {
+  background: #f6ffed;
+  color: #52c41a;
+  border: 1px solid #b7eb8f;
+}
+
+.todo-item .name {
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
 }
 
-.todo-item .right {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
+.todo-item .col-date {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
 }
 
-.todo-item .right .edit-btn {
-  color: #1677ff;
+.todo-item .col-person {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+/* 操作按钮(通用) */
+.todo-item .edit-btn,
+.todo-item .assign-btn,
+.todo-item .complete-btn,
+.todo-item .transfer-btn {
   font-size: 12px;
   cursor: pointer;
-  padding: 2px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.todo-item .right .edit-btn:hover {
+.todo-item .edit-btn {
+  color: #1677ff;
+}
+
+.todo-item .edit-btn:hover {
   background: #1677ff;
+  color: #fff;
+}
+
+.todo-item .assign-btn {
+  color: #52c41a;
+}
+
+.todo-item .assign-btn:hover {
+  background: #52c41a;
+  color: #fff;
+}
+
+.todo-item .complete-btn {
+  color: #52c41a;
+}
+
+.todo-item .complete-btn:hover {
+  background: #52c41a;
+  color: #fff;
+}
+
+.todo-item .transfer-btn {
+  color: #fa8c16;
+}
+
+.todo-item .transfer-btn:hover {
+  background: #fa8c16;
   color: #fff;
 }

@@ -168,7 +168,7 @@ CREATE TABLE devices (
     params TEXT COMMENT '技术参数',
     type ENUM('硬件','软件','服务') NOT NULL COMMENT '设备类型',
     unit VARCHAR(20) NOT NULL COMMENT '单位',
-    source ENUM('库存发货','外部采购') NOT NULL COMMENT '设备来源',
+    source ENUM('三方外采','库存设备') NOT NULL COMMENT '设备来源',
     quantity INT NOT NULL COMMENT '数量',
     school_id INT NOT NULL COMMENT '分配学校',
     install_location VARCHAR(100) COMMENT '安装位置',
@@ -237,7 +237,7 @@ CREATE TABLE risks (
     response_strategy TEXT COMMENT '应对措施',
     response_deadline DATE COMMENT '应对计划完成时间',
     responsible_person_id INT NOT NULL COMMENT '责任人',
-    status ENUM('待处理','处理中','已关闭') NOT NULL COMMENT '状态',
+    status ENUM('已识别','应对中','已关闭') NOT NULL COMMENT '状态',
     school_id INT COMMENT '关联学校',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -312,6 +312,58 @@ CREATE TABLE operation_logs (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
     FOREIGN KEY (user_id) REFERENCES users(id)
 ) COMMENT='操作日志表';
+
+-- ============================================================
+-- 17. production_lines - 产线类型字典表
+-- ============================================================
+CREATE TABLE production_lines (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    code VARCHAR(50) UNIQUE NOT NULL COMMENT '产线编码',
+    name VARCHAR(100) NOT NULL COMMENT '产线名称',
+    description VARCHAR(500) COMMENT '描述',
+    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) COMMENT='产线类型字典表';
+
+-- ============================================================
+-- 18. software_modules - 软件模块交付进度表
+-- ============================================================
+CREATE TABLE software_modules (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL COMMENT '模块名称',
+    phase ENUM('需求收集','需求确认','软件开发','软件测试','软件部署','上线运行') NOT NULL COMMENT '当前阶段',
+    progress INT DEFAULT 0 COMMENT '完成进度(0-100)',
+    expected_completion_date DATE COMMENT '预计完成时间',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) COMMENT='软件模块交付进度表';
+
+-- ============================================================
+-- 19. todos - 待办任务表
+-- ============================================================
+CREATE TABLE todos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL COMMENT '任务标题',
+    description TEXT COMMENT '任务描述',
+    priority ENUM('高','中','低') DEFAULT '中' COMMENT '优先级',
+    due_date DATE COMMENT '截止日期',
+    status ENUM('待处理','已完成') DEFAULT '待处理' COMMENT '状态',
+    assignee_id INT COMMENT '负责人ID',
+    creator_id INT COMMENT '创建人ID',
+    source_type ENUM('project','wbs','system') DEFAULT 'project' COMMENT '来源类型',
+    source_id INT COMMENT '来源记录ID',
+    transferred_from INT COMMENT '转办来源人ID',
+    parent_id INT COMMENT '父待办ID，支持多级树形结构，NULL为顶级',
+    completed_at DATETIME COMMENT '完成时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (parent_id) REFERENCES todos(id) ON DELETE CASCADE,
+    INDEX idx_parent (parent_id)
+) COMMENT='待办任务表';
 
 -- ============================================================
 -- 初始化数据

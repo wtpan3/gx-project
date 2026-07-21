@@ -131,11 +131,13 @@ CREATE TABLE project_info (
 -- ============================================================
 CREATE TABLE wbs_tasks (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    task_code VARCHAR(50) NOT NULL UNIQUE COMMENT '任务编码',
     project_phase_l1 VARCHAR(50) NOT NULL COMMENT 'L1项目阶段',
     sub_phase_l2 VARCHAR(50) NOT NULL COMMENT 'L2子阶段',
     task_package_l3 VARCHAR(100) NOT NULL COMMENT 'L3工作任务包',
     work_content_l4 VARCHAR(200) NOT NULL COMMENT 'L4工作内容',
     work_detail_l5 VARCHAR(200) COMMENT 'L5工作明细',
+    priority ENUM('高','中','低') NOT NULL DEFAULT '中' COMMENT '优先级',
     stage_type ENUM('到货验收','加电测试','校级验收','培训','无') COMMENT '关联阶段类型',
     plan_start_date DATE NOT NULL COMMENT '计划开始时间',
     plan_end_date DATE NOT NULL COMMENT '计划结束时间',

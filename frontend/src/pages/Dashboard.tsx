@@ -291,7 +291,7 @@ const Dashboard: React.FC = () => {
                     <div className="donut">
                       {renderDonutChart(deliveryProgress.school_progress, deliveryProgress.school_total)}
                       <div className="inner">
-                        <div className="pct">{Math.round((deliveryProgress.school_completed / deliveryProgress.school_total) * 100)}%</div>
+                        <div className="pct">{deliveryProgress.school_total > 0 ? Math.round((deliveryProgress.school_completed / deliveryProgress.school_total) * 100) : 0}%</div>
                         <div className="sub">已完成{deliveryProgress.school_completed}所</div>
                       </div>
                     </div>
@@ -314,7 +314,7 @@ const Dashboard: React.FC = () => {
                     <div className="donut">
                       {renderDonutChart(deliveryProgress.hardware_progress, deliveryProgress.hardware_total)}
                       <div className="inner">
-                        <div className="pct">{Math.round((deliveryProgress.hardware_completed / deliveryProgress.hardware_total) * 100)}%</div>
+                        <div className="pct">{deliveryProgress.hardware_total > 0 ? Math.round((deliveryProgress.hardware_completed / deliveryProgress.hardware_total) * 100) : 0}%</div>
                         <div className="sub">已完成{deliveryProgress.hardware_completed}台</div>
                       </div>
                     </div>

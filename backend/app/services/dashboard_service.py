@@ -61,13 +61,17 @@ class DashboardService:
         total_schools = db.query(School).count()
         # 简化:已完成学校 = 该校所有末级任务(level=3)均为已完成
         completed_schools = 0  # 需复杂SQL子查询,此处演示数据由seed提供,实际可优化
+
+        # TODO: 改为真实查询(从wbs_tasks关联school统计各阶段学校数)
+        # 当前简化逻辑:所有学校都显示为"待启动",避免负数
+        in_progress_count = 0  # 实际应查 wbs_tasks 统计各阶段学校数
         school_progress = [
             ProgressItem(label='已完成', count=completed_schools, color='#52c41a'),
-            ProgressItem(label='装修中', count=3, color='#722ed1'),
-            ProgressItem(label='安装中', count=2, color='#fa8c16'),
-            ProgressItem(label='调试中', count=0, color='#1677ff'),
-            ProgressItem(label='培训中', count=0, color='#faad14'),
-            ProgressItem(label='待启动', count=total_schools - completed_schools - 5, color='#8c8c8c'),
+            ProgressItem(label='装修中', count=in_progress_count, color='#722ed1'),
+            ProgressItem(label='安装中', count=in_progress_count, color='#fa8c16'),
+            ProgressItem(label='调试中', count=in_progress_count, color='#1677ff'),
+            ProgressItem(label='培训中', count=in_progress_count, color='#faad14'),
+            ProgressItem(label='待启动', count=total_schools - completed_schools, color='#8c8c8c'),
         ]
 
         # 硬件进度(按设备状态分组)

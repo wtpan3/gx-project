@@ -415,11 +415,30 @@ CREATE TABLE todos (
 
 ## 重要踩坑记录
 
-### MySQL中文双重编码
+### MySQL中文双重编码问题
+
+**问题根因**：导入SQL时未指定字符集，导致ENUM中文值被双重编码（UTF-8套UTF-8）。
+
+**受影响字段清单**（已在2026-07-22修复）：
+| 表名 | 字段 | 原ENUM值(双重编码) | 修复后 |
+|------|------|-------------------|--------|
+| device_systems | type | 乱码hex c3a7... | '硬件','软件','其他' |
+| software_modules | phase | 乱码6个phase值 | '需求收集','需求确认','软件开发','软件测试','软件部署','上线运行' |
+| todos | priority | 乱码 | '高','中','低' |
+| todos | status | 乱码 | '待开始','进行中','已完成' |
+
+**预防方法**（每次导入SQL必须执行）：
 ```bash
 # 必须指定字符集，否则中文乱码
 docker exec -i gx_mysql mysql -uroot -pGX2026!root \
   --default-character-set=utf8mb4 gx_project_dev < ddl.sql
+```
+
+**排查方法**（检查是否还有双重编码）：
+```sql
+-- 查看ENUM定义,如果显示乱码/hex则有问题
+SHOW COLUMNS FROM device_systems LIKE 'type';
+SHOW COLUMNS FROM software_modules LIKE 'phase';
 ```
 
 ### CORS配置
@@ -519,6 +538,7 @@ ac75939 feat(user): 完成用户管理模块（CRUD + 重置密码）
 | 原型设计 | [docs/06-原型设计/](docs/06-原型设计/) |
 | 测试规范 | [docs/07-测试规范/](docs/07-测试规范/) |
 | 历史归档 | [docs/08-历史归档/](docs/08-历史归档/)（临时报告，仅供参考） |
+| **项目复盘** | **[docs/09-项目复盘/](docs/09-项目复盘/)（问题分析、持续改进）** |
 
 ---
 
@@ -528,6 +548,12 @@ ac75939 feat(user): 完成用户管理模块（CRUD + 重置密码）
 - [ ] Node 版本是 18.x（`node -v`）
 - [ ] 后端 `.env` 配置正确（DB_HOST=124.222.151.69）
 - [ ] 前端 `.env.development` 存在
+
+### 问题修复后(必做)
+- [ ] L3浏览器端到端验证通过
+- [ ] **登记到问题簿**: `python scripts/log_issue.py`(30秒)
+
+详见 **[问题登记工作流](docs/09-项目复盘/问题登记工作流.md)**
 
 ### 验证（按"完成的定义"，必须走到 L3 端到端）
 
@@ -539,13 +565,43 @@ ac75939 feat(user): 完成用户管理模块（CRUD + 重置密码）
 
 ---
 
+## 已知问题（待修复）
+
+### 1. Device 模型字段名与数据库不匹配
+
+**问题**：backend/app/models/device.py 的3个字段名与数据库列名不一致：
+
+| models.py | 数据库实际列名 |
+|-----------|---------------|
+| installation_date | install_date |
+| debugging_date | debug_date |
+| acceptance_date | accept_date |
+
+**影响**：当前 Dashboard 碰巧未使用这3个字段,能正常运行。但只要有功能 SELECT/INSERT 这些字段就会抛 500 错误。
+
+**修复方向**：
+- 方案A(推荐): 改 models.py 字段名对齐数据库（`installation_date` → `install_date`）
+- 方案B: ALTER TABLE 给数据库加别名列（造成冗余）
+
+### 2. Dashboard 统计逻辑待优化
+
+| 项 | 当前逻辑 | 建议优化 |
+|----|----------|---------|
+| 重点学校卡片显示0 | 演示数据所有 schools.is_key=0 | 标记1-2所学校为重点 |
+| 设备类型数=180 | 统计逻辑可能不准 | 改为 `COUNT(DISTINCT device_name)` |
+| Dashboard 待办来源 | 只显示 wbs_tasks | 考虑合并 todos 表数据？ |
+
+**说明**：这些是业务逻辑/产品设计问题,非技术bug,需产品决策是否调整。
+
+---
+
 ## 技术支持
 
-- **服务器**: ssh root@124.222.151.69
-- **MySQL**: mysql -h 124.222.151.69 -u root -pGX2026!root gx_project_dev
+- **服务器**: ssh ubuntu@124.222.151.69
+- **MySQL**: docker exec -it gx_mysql mysql -uroot -pGX2026!root gx_project
 
 ---
 
 **维护者**: GX-PM Team  
-**最后更新**: 2026-07-20  
+**最后更新**: 2026-07-22
 **版本**: V2.1

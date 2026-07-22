@@ -88,7 +88,7 @@ curl http://<公网IP>:8000/health
 
 **解决方案**：
 - 登录腾讯云控制台 → 安全组 → 入站规则
-- 添加规则：TCP:8000 和 TCP:8080，来源 `0.0.0.0/0`
+- 添加规则：TCP:80（前端），来源 `0.0.0.0/0`（8000后端走Nginx反代，内网即可）
 
 
 ## 三、后端问题
@@ -177,7 +177,7 @@ sudo systemctl restart gx-backend
 **排查步骤**：
 ```bash
 # 1. 检查前端静态文件是否存在
-ls -la /var/www/gx/
+ls -la /home/ubuntu/gx-project/frontend/build/
 
 # 2. 检查Nginx状态
 sudo systemctl status nginx
@@ -186,7 +186,7 @@ sudo systemctl status nginx
 sudo nginx -t
 
 # 4. 检查端口监听
-netstat -tlnp | grep 8080
+netstat -tlnp | grep :80
 ```
 
 ### 4.2 API请求404（代理未生效）

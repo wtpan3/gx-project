@@ -7,12 +7,12 @@
 
 ### Q1: 前端页面无法访问？
 
-**现象**：浏览器打开 `http://124.222.151.69:8080` 无响应或超时
+**现象**：浏览器打开 `http://124.222.151.69/` 无响应或超时
 
 **排查步骤**：
 1. 检查前端进程：`ps aux | grep node`（开发模式）或检查 Nginx（生产模式）
-2. 检查端口监听：`sudo netstat -tlnp | grep 8080`
-3. 检查腾讯云安全组是否放行 8080 端口
+2. 检查端口监听：`sudo netstat -tlnp | grep 80`
+3. 检查腾讯云安全组是否放行 80 端口
 4. 检查 Nginx 状态：`sudo systemctl status nginx`
 
 **解决方案**：
@@ -128,7 +128,7 @@ docker exec -i gx_mysql mysql -uroot -pGX2026\!root gx_project -e "UPDATE users 
 - 或重启前端：`npm start`
 
 **前端（生产模式）**：
-- 需要重新构建：`npm run build && sudo cp -r build/* /var/www/gx/`
+- 需要重新构建：`cd ~/gx-project/frontend && npm run build`（Nginx 直接读 build 目录，无需复制）
 - 重启 Nginx：`sudo systemctl reload nginx`
 
 **后端**：
@@ -168,8 +168,8 @@ sudo systemctl start nginx
 | 端口 | 用途     | 建议                             |
 | ---- | -------- | -------------------------------- |
 | 22   | SSH登录  | 必须开放                         |
-| 8000 | 后端API  | 对外开放（或只对前端开放）       |
-| 8080 | 前端页面 | 对外开放                         |
+| 80   | 前端页面(Nginx) | 对外开放                  |
+| 8000 | 后端API  | 内网访问即可（前端走Nginx反代）  |
 | 3306 | MySQL    | **不建议对外开放**（仅内网访问） |
 
 ### Q14: 如何备份数据库？
@@ -192,7 +192,7 @@ docker exec gx_mysql mysqldump -uroot -pGX2026\!root gx_project_dev > ~/backup/g
 或手动检查：
 ```bash
 curl http://127.0.0.1:8000/health
-curl http://127.0.0.1:8080 | head -5
+curl http://127.0.0.1/ | head -5
 docker ps | grep gx_mysql
 ```
 

@@ -1195,7 +1195,7 @@
 | templates            | id, name, type, stage, file_path, version, description, status |
 | dict_items           | id, category, label, value, sort_order, is_enabled           |
 | project_info         | id, project_name, project_code, start_date, end_date, overall_status |
-| wbs_tasks            | id, project_phase_l1, sub_phase_l2, task_package_l3, work_content_l4, work_detail_l5, stage_type, plan_start_date, plan_end_date, status, actual_start_date, actual_end_date, assignee_id, progress_note, deliverables, school_id, source_device_id, construction_year, is_orphan |
+| wbs_tasks            | id, project_phase_l1, sub_phase_l2, task_package_l3, work_content_l4, work_detail_l5, stage_type, plan_start_date, plan_end_date, status, actual_start_date, actual_end_date, **responsible_person_id**（需求阶段写assignee_id，实现时改名）, progress_note, deliverables, school_id, source_device_id, construction_year, is_orphan |
 | task_attachments     | id, task_id, file_name, file_path, file_size, upload_by, upload_time, description |
 | devices              | id, project_name, construction_year, system_id, device_name, brand, model, params, type, unit, source, quantity, school_id, install_location, status, supplier_id, plan_arrival_date, delivery_no, delivery_date, arrival_date, install_date, debug_date, accept_date, remark |
 | trainings            | id, type, content, target_audience, person_count, duration_days, location, method, exam_method, plan_date, actual_date, status, related_task_id, is_district |

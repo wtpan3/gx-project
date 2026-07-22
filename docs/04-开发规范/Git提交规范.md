@@ -200,6 +200,11 @@ git commit -m "type(scope): subject"
 git push origin <branch>
 ```
 
+> 📌 **push 执行约定**
+> 本地与服务器均已配置 GitHub SSH 认证，`git push` 可由 **Claude 直接执行**。
+> **约束：push 前必须先向用户说明将推送的提交内容并获得确认**（对外、影响远程仓库的操作，不可静默执行）。
+> 说明历史：早期曾误认为"Claude 无 GitHub 认证、push 须用户手动执行"——该假设错误，已作废。
+
 ### 9.2 修改提交
 
 ```bash

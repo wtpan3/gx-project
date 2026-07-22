@@ -197,7 +197,7 @@ class DashboardService:
             TodoItem(
                 id=t.WbsTask.id,
                 task_name=t.WbsTask.work_content_l4,
-                priority='中',  # 服务器表无priority字段,默认中
+                priority=t.WbsTask.priority or '中',  # 读真实优先级(高/中/低),空则默认中
                 assignee_name=t.real_name if scope == 'project' else None,
                 plan_end_date=t.WbsTask.plan_end_date,
                 status=t.WbsTask.status

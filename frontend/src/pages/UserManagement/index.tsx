@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Space } from 'antd';
-import { PlusOutlined, EditOutlined, KeyOutlined, LockOutlined, StopOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, KeyOutlined, LockOutlined, StopOutlined, CheckCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 
 interface User {
@@ -100,6 +100,17 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // 删除用户
+  const handleDeleteUser = async (record: User) => {
+    try {
+      await api.delete(`/api/v1/users/${record.id}`);
+      message.success('用户已删除');
+      fetchUsers();
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '删除失败');
+    }
+  };
+
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     { title: '用户名', dataIndex: 'username' },
@@ -110,7 +121,7 @@ const UserManagement: React.FC = () => {
     { title: '状态', dataIndex: 'status', render: (v: string) => <span style={{ color: v === '启用' ? 'green' : 'red' }}>{v}</span> },
     {
       title: '操作',
-      width: 380,
+      width: 450,
       render: (_: any, record: User) => (
         <Space wrap>
           <Button size="small" icon={<EditOutlined />} onClick={() => { setEditingUser(record); form.setFieldsValue(record); setModalVisible(true); }}>编辑</Button>
@@ -127,6 +138,9 @@ const UserManagement: React.FC = () => {
               <Button size="small" type="primary" ghost icon={<CheckCircleOutlined />}>启用</Button>
             </Popconfirm>
           )}
+          <Popconfirm title="确认删除该用户？删除后将无法恢复。" onConfirm={() => handleDeleteUser(record)}>
+            <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
+          </Popconfirm>
         </Space>
       ),
     },

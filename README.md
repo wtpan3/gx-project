@@ -65,6 +65,10 @@
 - **后端**: Python 3.11+ + FastAPI + SQLAlchemy ORM
 - **数据库**: MySQL 8.0（服务器Docker容器）
 - **认证**: JWT Token
+- **AI模型**: MiniMax-M系列（M3/M2.7/M2.5及highspeed版本）
+- **向量数据库**: FAISS（本地）/ Milvus（生产可选）
+- **RAG框架**: LangChain
+- **微信接入**: 普通微信公众号 + OpenClaw
 - **进程管理**: Screen（开发）/ systemd（生产）
 - **Web服务器**: Nginx（生产环境，端口80，反代 /api 到后端8000）
 
@@ -99,32 +103,11 @@ cd frontend; $env:PATH="C:\Program Files\nodejs;$env:PATH"; $env:BROWSER='none';
 
 ### 数据库枚举值约定
 
-以下枚举值已与产品原型完全对齐，**开发时必须严格遵守**：
+> ⚠️ **枚举值权威来源已统一到 [CLAUDE.md](CLAUDE.md) 的"数据库枚举值"章节**（与 ddl.sql 对齐）。
+> 开发时以 CLAUDE.md / ddl.sql 为准，本处不再重复维护，避免两处不一致。
 
-#### 设备来源（devices.source）
-```sql
-ENUM('三方外采', '库存设备')
-```
-- `三方外采`：从第三方供应商采购的设备
-- `库存设备`：从自有库存调拨的设备
-
-#### 风险状态（risks.status）
-```sql
-ENUM('已识别', '应对中', '已关闭')
-```
-- `已识别`：风险已发现，尚未采取措施
-- `应对中`：正在采取措施应对
-- `已关闭`：风险已解决或消除（首页不显示）
-
-#### 软件模块阶段（software_modules.phase）
-```sql
-ENUM('需求收集', '需求确认', '软件开发', '软件测试', '软件部署', '上线运行')
-```
-
-#### 硬件设备状态（devices.status）
-```sql
-ENUM('待发货', '已到货', '已安装', '已调试', '运行中')
-```
+涉及：devices.source/status、risks.status、software_modules.phase、
+wbs_tasks.status/priority、device_systems.type、todos.priority。
 
 ### 菜单顺序（左侧导航栏）
 
@@ -142,7 +125,7 @@ ENUM('待发货', '已到货', '已安装', '已调试', '运行中')
 | 10 | 项目复盘 | 验收后复盘 |
 | 11 | **系统管理** | **置底**（配置类功能） |
 
-系统管理子菜单：用户管理、学校管理、设备字典、供应商管理、产线类型管理、模板管理、数据字典、项目信息、操作日志
+系统管理子菜单：用户管理、学校管理、设备字典、供应商管理、产线类型管理、模板管理、数据字典、项目信息、AI配置、微信对话、问答机器人、操作日志
 
 ### 数据可下钻（全局交互规范）
 
@@ -162,11 +145,10 @@ ENUM('待发货', '已到货', '已安装', '已调试', '运行中')
 ### 前后端通信
 - **开发环境**：前端直接调后端 `http://127.0.0.1:8000`（`.env.development` 配置）
 - **生产环境**：前端用**相对路径**（`REACT_APP_API_URL` 置空），请求经 **Nginx 反代**到后端（同源，无 CORS）
-- 环境变量: `REACT_APP_API_URL`（生产留空=相对路径，开发=127.0.0.1:8000）
-- 前端统一API客户端: `src/services/api.ts`（自动注入token、401跳转；空值判断用 `!== undefined`，空串表示相对路径）
-- `src/services/wbsService.ts` 同规则，勿硬编码地址
+- 前端统一API客户端: `src/services/api.ts`、`src/services/wbsService.ts`，勿硬编码地址
 
-> ⚠️ 历史更正：早期为"前端直连后端:8000、无代理"，曾导致生产环境 CORS 拦截登录失败。现改为生产走 Nginx 反代。
+> ⚠️ 关键约束（生产留空、CORS、Node 18）已收录到 [CLAUDE.md](CLAUDE.md) 的"架构约定"章节，此处仅作背景说明。
+> 历史更正：早期"前端直连后端:8000、无代理"曾导致生产 CORS 拦截登录失败，现改为生产走 Nginx 反代。
 
 ### 数据库配置
 - **服务器**: 124.222.151.69:3306
@@ -186,21 +168,8 @@ DB_PASSWORD=GX2026!root
 DB_NAME=gx_project_dev
 ```
 
-**前端 `.env.development`**:
-```env
-REACT_APP_API_URL=http://127.0.0.1:8000
-```
-
-**前端 `.env.production`**（生产环境走 Nginx 反代，地址留空=相对路径）:
-```env
-REACT_APP_API_URL=
-```
-> 留空是**有意为之**：前端用相对路径 `/api/v1/...`，经 Nginx 反代到后端，与页面同源，避免 CORS。**切勿填回 `http://124.222.151.69:8000`**（会重现 CORS 故障）。
-
-### Node 版本要求
-- **必须**: Node 18.x LTS（**不支持 20+**）
-- **验证**: `node -v` 应显示 v18.x.x
-- 如本机是 20+/更高版本，用 nvm 切到 18.x
+**前端**: 开发 `.env.development` 填 `REACT_APP_API_URL=http://127.0.0.1:8000`；
+生产 `.env.production` **留空**（相对路径走 Nginx 反代，切勿填回后端地址——详见 CLAUDE.md）。
 
 ### Python 环境
 - **生产环境**: systemd 直接用系统 `/usr/bin/python3`，**无虚拟环境 venv**
@@ -282,19 +251,18 @@ CREATE TABLE todos (
 
 ### 关键字段差异
 
-**schools表**: 使用`full_name`（非name）、`region`（非district）、`campus_manager_id`（非principal）、`is_key`（是否重点学校）
+> ⚠️ **易错字段名（full_name≠name 等）权威列表见 [CLAUDE.md](CLAUDE.md) "易错字段名"章节**。
+> 字段名一律以 `ddl.sql` 与代码模型为准（三方已对齐）。
 
-**devices表**: `source` ENUM('三方外采','库存设备')、`status` ENUM('待发货','已到货','已安装','已调试','运行中')
-
-**risks表**: `risk_desc`（非description）、`trigger_condition`、`impact_description`（非impact）、`response_strategy`（非response_plan）、`responsible_person_id`（非owner_id）、`status` ENUM('已识别','应对中','已关闭')
-
-**wbs_tasks表**: 有 `task_code`（任务编码，唯一）、`priority` ENUM('高','中','低')、`responsible_person_id`（责任人，非 assignee_id）、`status` ENUM('待开始','进行中','已完成','已延期','待补材料')
-
-> ⚠️ 历史更正：早期写"无 priority 字段"有误；字段名以 ddl.sql 与代码模型为准（三方已对齐）。
+涉及：schools(full_name/region/campus_manager_id/is_key)、
+devices(source/status)、risks(risk_desc/impact_description/response_strategy/responsible_person_id)、
+wbs_tasks(task_code/priority/responsible_person_id/status/parent_id)。
 
 ---
 
 ## 核心业务规则
+
+> 本章是业务规则的**详细权威版**；CLAUDE.md 只保留速记摘要，改动时以本章为准。
 
 ### 整体进度计算
 ```
@@ -415,7 +383,9 @@ CREATE TABLE todos (
 
 ## 重要踩坑记录
 
-### MySQL中文双重编码问题
+> 高频踩坑（MySQL中文编码、uvicorn reload、CORS、Node）的**速记版在 [CLAUDE.md](CLAUDE.md)**；本章为含复现/排查的详细版。
+
+### MySQL中文双重编码问题 ⚠️
 
 **问题根因**：导入SQL时未指定字符集，导致ENUM中文值被双重编码（UTF-8套UTF-8）。
 
@@ -427,11 +397,78 @@ CREATE TABLE todos (
 | todos | priority | 乱码 | '高','中','低' |
 | todos | status | 乱码 | '待开始','进行中','已完成' |
 
-**预防方法**（每次导入SQL必须执行）：
+**预防方法 - MySQL操作规范** ⭐:
+
+> **强制规则**: 任何涉及中文数据的MySQL操作，必须遵循本节规范。违反将导致数据损坏。
+
+#### 1. 导入SQL文件（必须指定字符集）— CRITICAL ⭐
+
+**推荐方式: 使用封装脚本（自动加字符集参数）**
+
 ```bash
-# 必须指定字符集，否则中文乱码
+# Bash (Git Bash / WSL)
+./scripts/import_sql.sh ddl.sql                    # 导入到默认数据库 gx_project_dev
+./scripts/import_sql.sh migration.sql gx_project   # 导入到指定数据库
+
+# PowerShell
+.\scripts\import_sql.ps1 ddl.sql                   # 导入到默认数据库
+.\scripts\import_sql.ps1 migration.sql gx_project  # 导入到指定数据库
+```
+
+**封装脚本位置**: 
+- Bash: `backend/scripts/import_sql.sh` ✅
+- PowerShell: `backend/scripts/import_sql.ps1` ✅
+- 功能：自动添加 `--default-character-set=utf8mb4` 参数，防止中文双重编码
+
+**手动导入（必须加字符集参数）**
+
+```bash
+# ✅ 正确做法 - 必须加 --default-character-set=utf8mb4
 docker exec -i gx_mysql mysql -uroot -pGX2026!root \
   --default-character-set=utf8mb4 gx_project_dev < ddl.sql
+
+# ❌ 错误做法 - 不加字符集参数会导致中文双重编码
+docker exec -i gx_mysql mysql -uroot -pGX2026!root \
+  gx_project_dev < ddl.sql  # 会出现乱码！
+```
+
+**为什么必须加这个参数？**
+- MySQL客户端默认字符集可能是latin1
+- 不指定utf8mb4会把UTF-8中文当作latin1再转一次UTF-8
+- 结果：`'硬件'` 变成 `0xc3a7c2a1...` 乱码hex
+
+**历史血泪教训**（来自问题登记簿）:
+- P007: device_systems.type 双重编码
+- P008: software_modules.phase 双重编码
+- P009: todos.priority 双重编码
+- P010: todos.status 双重编码
+- **共同根因**: 导入SQL时忘记加 `--default-character-set=utf8mb4`
+
+#### 2. 创建表时的字符集规范
+
+```sql
+-- ✅ 建表必须指定表级字符集
+CREATE TABLE devices (
+  id INT PRIMARY KEY,
+  type ENUM('硬件','软件','其他') NOT NULL
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ✅ ENUM字段包含中文时，表必须是utf8mb4
+CREATE TABLE todos (
+  priority ENUM('高','中','低')
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+#### 3. 修改表结构时保持字符集一致
+
+```sql
+-- 修改ENUM前先检查表字符集
+SHOW CREATE TABLE device_systems;
+
+-- 修改时保持字符集
+ALTER TABLE device_systems 
+  MODIFY type ENUM('硬件','软件','其他') 
+  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 **排查方法**（检查是否还有双重编码）：
@@ -439,7 +476,16 @@ docker exec -i gx_mysql mysql -uroot -pGX2026!root \
 -- 查看ENUM定义,如果显示乱码/hex则有问题
 SHOW COLUMNS FROM device_systems LIKE 'type';
 SHOW COLUMNS FROM software_modules LIKE 'phase';
+
+-- 查看表字符集
+SHOW CREATE TABLE device_systems;
 ```
+
+**历史问题记录**：
+- 2026-07-22: 4个表(device_systems/software_modules/todos.priority/todos.status)发生双重编码
+- 根因: 导入ddl.sql时未加 --default-character-set=utf8mb4
+- 修复: 逐表ALTER MODIFY重新定义ENUM
+- 预防: 本节规范写入README，强制执行
 
 ### CORS配置
 ```python
@@ -463,6 +509,8 @@ JWT的`sub`字段使用**user.id**（不是username）。
 ---
 
 ## Git工作流
+
+> 提交格式与 push 前确认约束的**速记版在 [CLAUDE.md](CLAUDE.md)**；本章为完整说明。
 
 ### 配置
 ```bash
@@ -538,7 +586,8 @@ ac75939 feat(user): 完成用户管理模块（CRUD + 重置密码）
 | 原型设计 | [docs/06-原型设计/](docs/06-原型设计/) |
 | 测试规范 | [docs/07-测试规范/](docs/07-测试规范/) |
 | 历史归档 | [docs/08-历史归档/](docs/08-历史归档/)（临时报告，仅供参考） |
-| **项目复盘** | **[docs/09-项目复盘/](docs/09-项目复盘/)（问题分析、持续改进）** |
+
+> **问题登记与复盘已迁移到全局**:[`f:\claude code\问题登记与复盘\`](f:/claude%20code/%E9%97%AE%E9%A2%98%E7%99%BB%E8%AE%B0%E4%B8%8E%E5%A4%8D%E7%9B%98/)
 
 ---
 

@@ -57,9 +57,35 @@ const menuItems = [
   },
 ];
 
+// 页面标题映射
+const pageTitleMap: Record<string, string> = {
+  '/dashboard': '首页',
+  '/project-plan': '项目计划',
+  '/delivery-progress': '交付进展',
+  '/risk-management': '风险管理',
+  '/device-info': '设备信息',
+  '/school-dashboard': '学校看板',
+  '/training-management': '培训管理',
+  '/report-management': '报告管理',
+  '/material-library': '交付材料库',
+  '/project-review': '项目复盘',
+  '/users': '用户管理',
+  '/schools': '学校管理',
+  '/device-systems': '设备字典',
+  '/suppliers': '供应商管理',
+  '/production-lines': '产线类型管理',
+  '/templates': '模板管理',
+  '/dict-items': '数据字典',
+  '/project-info': '项目信息',
+  '/operation-logs': '操作日志',
+};
+
 const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 获取当前页面标题
+  const currentPageTitle = pageTitleMap[location.pathname] || '';
 
   const userMenu = {
     items: [
@@ -71,7 +97,7 @@ const MainLayout: React.FC = () => {
     <Layout style={{ minHeight: '100vh' }}>
       <Sider width={220} theme="dark" style={{ position: 'fixed', left: 0, top: 0, bottom: 0, overflowY: 'auto' }}>
         <div style={{ height: 48, margin: 16, lineHeight: '48px', textAlign: 'center', fontSize: 16, fontWeight: 600, color: '#fff' }}>
-          GX项目管理
+          项目交付管理系统
         </div>
         <Menu
           theme="dark"
@@ -84,7 +110,10 @@ const MainLayout: React.FC = () => {
       </Sider>
       <Layout style={{ marginLeft: 220 }}>
         <Header style={{ background: '#fff', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', position: 'sticky', top: 0, zIndex: 10 }}>
-          <span style={{ fontSize: 18, fontWeight: 600 }}>高新区"AI+教育"项目交付管理系统</span>
+          <span style={{ fontSize: 18, fontWeight: 600 }}>
+            高新区"AI+教育"项目交付管理系统
+            {currentPageTitle && <span style={{ color: '#999', fontWeight: 400, marginLeft: 8 }}>/ {currentPageTitle}</span>}
+          </span>
           <Dropdown menu={userMenu} placement="bottomRight">
             <Space style={{ cursor: 'pointer' }}>
               <Avatar icon={<UserOutlined />} />

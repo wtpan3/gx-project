@@ -35,6 +35,7 @@ interface DeliveryProgress {
 }
 
 interface Milestone {
+  level?: number;
   phase: string;
   task: string;
   plan_start_date: string | null;
@@ -50,7 +51,7 @@ interface RiskItem {
   response_plan: string | null;
   owner_name: string | null;
   registered_at: string | null;
-  plan_close_date: string | null;
+  plan_close_date: string | null;  // V2.3轻量级模型已移除，但保留接口兼容性
   status: string;
 }
 
@@ -356,7 +357,7 @@ const Dashboard: React.FC = () => {
       </Card>
 
       {/* ③ 关键里程碑 */}
-      <Card title="关键里程碑" extra={<span style={{ color: '#1677ff', cursor: 'pointer' }}>查看完整计划 →</span>} style={{ marginBottom: 16 }}>
+      <Card title="关键里程碑" extra={<span style={{ color: '#1677ff', cursor: 'pointer' }} onClick={() => navigate('/project-plan')}>查看完整计划 →</span>} style={{ marginBottom: 16 }}>
         <div className="gantt-container">
           <table className="gantt">
             <colgroup>
@@ -378,16 +379,23 @@ const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {milestones.map((m, idx) => (
-                <tr key={idx}>
-                  <td style={{ textAlign: 'left', paddingLeft: 8 }} title={m.phase}>{m.phase}</td>
-                  <td style={{ textAlign: 'left' }} title={m.task}>{m.task}</td>
-                  <td style={{ padding: '8px 12px' }}>{renderGanttBar(m)}</td>
-                  <td style={{ fontSize: 12 }}>{m.plan_start_date || '-'}</td>
-                  <td style={{ fontSize: 12 }}>{m.plan_end_date || '-'}</td>
-                  <td className={`status st-${getStatusClass(m.status)}`}>{m.status}</td>
-                </tr>
-              ))}
+              {milestones.map((m, idx) => {
+                const isL1 = (m.level ?? 1) === 1;
+                return (
+                  <tr key={idx} style={{ cursor: 'pointer' }} onClick={() => navigate('/project-plan')}>
+                    <td style={{ textAlign: 'left', paddingLeft: 8, fontWeight: isL1 ? 600 : 400 }} title={m.phase}>
+                      {isL1 ? m.phase : ''}
+                    </td>
+                    <td style={{ textAlign: 'left', paddingLeft: isL1 ? 8 : 28, fontWeight: isL1 ? 600 : 400 }} title={m.task}>
+                      {isL1 ? m.task : m.task}
+                    </td>
+                    <td style={{ padding: '8px 12px' }}>{renderGanttBar(m)}</td>
+                    <td style={{ fontSize: 12 }}>{m.plan_start_date || '-'}</td>
+                    <td style={{ fontSize: 12 }}>{m.plan_end_date || '-'}</td>
+                    <td className={`status st-${getStatusClass(m.status)}`}>{m.status}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -399,11 +407,10 @@ const Dashboard: React.FC = () => {
           <table className="tb">
             <colgroup>
               <col style={{ width: 60 }} />
-              <col style={{ width: 280 }} />
-              <col style={{ width: 180 }} />
-              <col style={{ width: 280 }} />
+              <col style={{ width: 300 }} />
+              <col style={{ width: 200 }} />
+              <col style={{ width: 300 }} />
               <col style={{ width: 80 }} />
-              <col style={{ width: 100 }} />
               <col style={{ width: 100 }} />
               <col style={{ width: 80 }} />
             </colgroup>
@@ -412,10 +419,9 @@ const Dashboard: React.FC = () => {
                 <th>等级</th>
                 <th>风险描述</th>
                 <th>风险影响评估</th>
-                <th>应对方案</th>
+                <th>应对策略</th>
                 <th>责任人</th>
                 <th>登记时间</th>
-                <th>计划关闭时间</th>
                 <th>状态</th>
               </tr>
             </thead>
@@ -428,7 +434,6 @@ const Dashboard: React.FC = () => {
                   <td title={r.response_plan || ''}>{r.response_plan || '-'}</td>
                   <td>{r.owner_name || '-'}</td>
                   <td>{r.registered_at || '-'}</td>
-                  <td>{r.plan_close_date || '-'}</td>
                   <td>{r.status}</td>
                 </tr>
               ))}

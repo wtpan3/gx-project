@@ -38,6 +38,7 @@ class DeliveryProgress(BaseModel):
 
 # ===== 里程碑 =====
 class Milestone(BaseModel):
+    level: int = 1        # 1=L1父节点, 2=L2子节点
     phase: str
     task: str
     plan_start_date: Optional[date]

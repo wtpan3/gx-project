@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(title="GX教育项目交付管理系统", version="2.1")
 
@@ -21,8 +23,14 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
-from app.api.v1 import auth, users, dashboard, wbs
+# 挂载上传文件静态目录(佐证材料)
+_UPLOAD_DIR = os.path.abspath("uploads")
+os.makedirs(_UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=_UPLOAD_DIR), name="uploads")
+
+from app.api.v1 import auth, users, dashboard, wbs, project_plan
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["认证"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["用户管理"])
 app.include_router(dashboard.router, prefix="/api/v1/dashboard", tags=["首页仪表盘"])
-app.include_router(wbs.router, prefix="/api/v1", tags=["WBS任务管理"])
+app.include_router(wbs.router, prefix="/api/v1", tags=["WBS任务管理（旧版）"])
+app.include_router(project_plan.router, prefix="/api/v1", tags=["项目计划V2.2"])

@@ -2,7 +2,7 @@
 from typing import List, Optional
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 
 from app.models.school import School
 from app.models.device_system import DeviceSystem
@@ -59,19 +59,87 @@ class DashboardService:
         """交付进度:学校/硬件/软件"""
         # 学校进度(按状态分组统计 - 从WBS任务推导学校完成度)
         total_schools = db.query(School).count()
-        # 简化:已完成学校 = 该校所有末级任务(level=3)均为已完成
-        completed_schools = 0  # 需复杂SQL子查询,此处演示数据由seed提供,实际可优化
 
-        # TODO: 改为真实查询(从wbs_tasks关联school统计各阶段学校数)
-        # 当前简化逻辑:所有学校都显示为"待启动",避免负数
-        in_progress_count = 0  # 实际应查 wbs_tasks 统计各阶段学校数
+        # 学校进度统计 - 从 wbs_tasks 表真实查询各阶段学校数
+        # 逻辑: 根据各学校关联的末级任务(level=3)完成情况判断学校所处阶段
+        # 简化版: 统计各学校的任务完成比例，按阈值划分阶段
+
+        # 获取所有学校ID列表
+        schools = db.query(School.id, School.full_name).all()
+        school_phase_counts = {
+            '已完成': 0,
+            '装修中': 0,
+            '安装中': 0,
+            '调试中': 0,
+            '培训中': 0,
+            '待启动': 0
+        }
+
+        for school_id, school_name in schools:
+            # 查询该学校的末级任务(work_content_l4不为空)
+            school_tasks = db.query(WbsTask).filter(
+                WbsTask.school_id == school_id,
+                WbsTask.work_content_l4 != ''
+            ).all()
+
+            if not school_tasks:
+                # 无任务视为待启动
+                school_phase_counts['待启动'] += 1
+                continue
+
+            # 统计任务完成情况
+            total_tasks = len(school_tasks)
+            completed_tasks = sum(1 for t in school_tasks if t.status == '已完成')
+            completion_rate = completed_tasks / total_tasks if total_tasks > 0 else 0
+
+            # 根据完成率和任务阶段关键词判断学校阶段
+            if completion_rate >= 1.0:
+                school_phase_counts['已完成'] += 1
+            elif completion_rate == 0:
+                school_phase_counts['待启动'] += 1
+            else:
+                # 根据进行中任务的阶段名称判断
+                in_progress_tasks = [t for t in school_tasks if t.status == '进行中']
+                if in_progress_tasks:
+                    # 取第一个进行中任务的阶段作为学校当前阶段
+                    phase_name = in_progress_tasks[0].project_phase_l1 or ''
+                    if '装修' in phase_name or '环境' in phase_name:
+                        school_phase_counts['装修中'] += 1
+                    elif '安装' in phase_name:
+                        school_phase_counts['安装中'] += 1
+                    elif '调试' in phase_name:
+                        school_phase_counts['调试中'] += 1
+                    elif '培训' in phase_name:
+                        school_phase_counts['培训中'] += 1
+                    else:
+                        # 默认按完成率判断
+                        if completion_rate > 0.8:
+                            school_phase_counts['培训中'] += 1
+                        elif completion_rate > 0.6:
+                            school_phase_counts['调试中'] += 1
+                        elif completion_rate > 0.4:
+                            school_phase_counts['安装中'] += 1
+                        else:
+                            school_phase_counts['装修中'] += 1
+                else:
+                    # 无进行中任务但有已完成，按完成率判断
+                    if completion_rate > 0.8:
+                        school_phase_counts['培训中'] += 1
+                    elif completion_rate > 0.6:
+                        school_phase_counts['调试中'] += 1
+                    elif completion_rate > 0.4:
+                        school_phase_counts['安装中'] += 1
+                    else:
+                        school_phase_counts['装修中'] += 1
+
+        completed_schools = school_phase_counts['已完成']
         school_progress = [
-            ProgressItem(label='已完成', count=completed_schools, color='#52c41a'),
-            ProgressItem(label='装修中', count=in_progress_count, color='#722ed1'),
-            ProgressItem(label='安装中', count=in_progress_count, color='#fa8c16'),
-            ProgressItem(label='调试中', count=in_progress_count, color='#1677ff'),
-            ProgressItem(label='培训中', count=in_progress_count, color='#faad14'),
-            ProgressItem(label='待启动', count=total_schools - completed_schools, color='#8c8c8c'),
+            ProgressItem(label='已完成', count=school_phase_counts['已完成'], color='#52c41a'),
+            ProgressItem(label='装修中', count=school_phase_counts['装修中'], color='#722ed1'),
+            ProgressItem(label='安装中', count=school_phase_counts['安装中'], color='#fa8c16'),
+            ProgressItem(label='调试中', count=school_phase_counts['调试中'], color='#1677ff'),
+            ProgressItem(label='培训中', count=school_phase_counts['培训中'], color='#faad14'),
+            ProgressItem(label='待启动', count=school_phase_counts['待启动'], color='#8c8c8c'),
         ]
 
         # 硬件进度(按设备状态分组)
@@ -114,24 +182,76 @@ class DashboardService:
 
     @staticmethod
     def _get_milestones(db: Session) -> List[Milestone]:
-        """关键里程碑(取L2子阶段任务,按计划开始时间排序,最多展示4条)"""
+        """关键里程碑(取L1项目阶段+L2子阶段,去重后按层级展示,L1父/L2子,不限条数)
+        V2.3需求§6.1.5/§6.2.6: 取L1+L2作为里程碑节点，层级展示，去重，按计划开始时间排序。
+        """
         tasks = db.query(WbsTask).filter(
-            WbsTask.sub_phase_l2 != ''
-        ).order_by(WbsTask.plan_start_date).limit(4).all()
+            WbsTask.is_orphan == 0,
+            WbsTask.project_phase_l1 != ''
+        ).all()
 
-        return [
-            Milestone(
-                phase=t.project_phase_l1 or '',
-                task=t.sub_phase_l2,
-                plan_start_date=t.plan_start_date,
-                plan_end_date=t.plan_end_date,
-                status=t.status
-            ) for t in tasks
-        ]
+        def _agg_status(statuses):
+            """聚合状态: 全已完成→已完成; 有已延期→已延期; 有进行中/部分完成→进行中; 否则→未开始"""
+            s = set(statuses)
+            if s and all(x == '已完成' for x in s):
+                return '已完成'
+            if '已延期' in s:
+                return '已延期'
+            if '进行中' in s or '已完成' in s or '待补材料' in s:
+                return '进行中'
+            return '未开始'
+
+        def _date_range(items, getter):
+            vals = [getter(t) for t in items if getter(t) is not None]
+            return (min(vals) if vals else None, max(vals) if vals else None)
+
+        # 按L1分组
+        l1_groups = {}
+        for t in tasks:
+            l1_groups.setdefault(t.project_phase_l1, []).append(t)
+
+        # L1按最早计划开始时间排序
+        def _min_start(items):
+            vals = [t.plan_start_date for t in items if t.plan_start_date is not None]
+            return min(vals) if vals else date.max
+
+        result = []
+        for l1_name in sorted(l1_groups.keys(), key=lambda k: _min_start(l1_groups[k])):
+            l1_tasks = l1_groups[l1_name]
+            l1_start, _ = _date_range(l1_tasks, lambda t: t.plan_start_date)
+            _, l1_end = _date_range(l1_tasks, lambda t: t.plan_end_date)
+            # L1父节点
+            result.append(Milestone(
+                level=1,
+                phase=l1_name,
+                task=l1_name,
+                plan_start_date=l1_start,
+                plan_end_date=l1_end,
+                status=_agg_status([t.status for t in l1_tasks])
+            ))
+            # 该L1下的L2子节点(去重,过滤空L2)
+            l2_groups = {}
+            for t in l1_tasks:
+                if t.sub_phase_l2:
+                    l2_groups.setdefault(t.sub_phase_l2, []).append(t)
+            for l2_name in sorted(l2_groups.keys(), key=lambda k: _min_start(l2_groups[k])):
+                l2_tasks = l2_groups[l2_name]
+                l2_start, _ = _date_range(l2_tasks, lambda t: t.plan_start_date)
+                _, l2_end = _date_range(l2_tasks, lambda t: t.plan_end_date)
+                result.append(Milestone(
+                    level=2,
+                    phase=l1_name,
+                    task=l2_name,
+                    plan_start_date=l2_start,
+                    plan_end_date=l2_end,
+                    status=_agg_status([t.status for t in l2_tasks])
+                ))
+
+        return result
 
     @staticmethod
     def _get_risks(db: Session) -> List[RiskItem]:
-        """项目风险(仅活跃风险:状态≠已关闭,按等级+状态+响应期限排序,最多8条)"""
+        """项目风险(仅活跃风险:状态≠已关闭,按等级+状态排序,最多8条)"""
         risks = db.query(Risk, User.real_name).outerjoin(
             User, Risk.responsible_person_id == User.id
         ).filter(
@@ -141,8 +261,8 @@ class DashboardService:
             func.field(Risk.risk_level, '高', '中', '低'),
             # 应对中→已识别
             func.field(Risk.status, '应对中', '已识别'),
-            # 响应期限升序
-            Risk.response_deadline
+            # 创建时间升序（最新的排前面）
+            Risk.created_at.desc()
         ).limit(8).all()
 
         return [
@@ -154,7 +274,7 @@ class DashboardService:
                 response_plan=r.Risk.response_strategy,
                 owner_name=r.real_name,
                 registered_at=r.Risk.created_at.date() if r.Risk.created_at else None,
-                plan_close_date=r.Risk.response_deadline,
+                plan_close_date=None,  # V2.3轻量级模型：移除response_deadline
                 status=r.Risk.status
             ) for r in risks
         ]

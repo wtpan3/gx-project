@@ -56,7 +56,7 @@ Closes #123
 | device    | 设备管理   | 设备字典、设备台账 |
 | wbs       | 项目计划   | WBS任务管理        |
 | delivery  | 交付进展   | 交付跟踪           |
-| training  | 培训管理   | 培训计划           |
+| training  | 培训记录   | 培训记录（并入交付进展）|
 | risk      | 风险管理   | 风险识别           |
 | report    | 报告管理   | 周报/月报          |
 | dashboard | 仪表板     | 首页概览           |

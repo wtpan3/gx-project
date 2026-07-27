@@ -36,6 +36,9 @@ ddl_dev.sql
 *.swp
 *.tmp
 
+# ===== AI临时工作区(铁律#7:临时文件放此,不入库) =====
+ai_workspace/
+
 # ===== IDE =====
 .vscode/
 .idea/

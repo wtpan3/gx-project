@@ -116,12 +116,34 @@ const ProjectPlan: React.FC = () => {
   }>>([]);
   const [uploadDesc, setUploadDesc] = useState('');
 
+  // 导入/导出
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    success: number; skipped: number; failed: number; total: number; details: string[];
+  } | null>(null);
+
   // 新增/编辑任务弹窗
   const [taskModalVisible, setTaskModalVisible] = useState(false);
   const [taskForm] = Form.useForm();
   // 父任务下拉选项 + 选中父任务后自动确定的层级
-  const [parentOptions, setParentOptions] = useState<Array<{ id: number; level: number; label: string }>>([]);
+  const [parentOptions, setParentOptions] = useState<Array<{
+    id: number; level: number; label: string;
+    plan_start_date?: string | null; plan_end_date?: string | null;
+  }>>([]);
   const [childLevel, setChildLevel] = useState<string>('选择父任务后自动确定');
+  // 选定父任务的日期范围(新增弹窗日历置灰用)
+  const [parentRange, setParentRange] = useState<{ start: string; end: string } | null>(null);
+
+  // 父子日期越界冲突弹窗(后端返 409 时弹出,二选一后带策略重发)
+  const [dateConflict, setDateConflict] = useState<{
+    code: string;
+    message: string;
+    options: Array<{ strategy: string; label: string; preview: { start: string; end: string } }>;
+    affectedChildren?: Array<{ id: number; name: string; range: string }>;
+    retry: (strategy: string) => Promise<void>;
+  } | null>(null);
+  const [resolving, setResolving] = useState(false);
 
   // 筛选草稿(绑定控件,点「查询」才应用到 filters 触发加载)
   const [draftFilters, setDraftFilters] = useState<{
@@ -281,6 +303,54 @@ const ProjectPlan: React.FC = () => {
     loadSummary();
   };
 
+  // 导出当前筛选结果为 xlsx
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await api.get(`${API_BASE}/project-plan/export`, {
+        params: { ...filters },
+        responseType: 'blob'
+      });
+      // 从响应头解析文件名,失败则用默认名
+      let filename = `项目计划_${dayjs().format('YYYYMMDD')}.xlsx`;
+      const disposition = res.headers['content-disposition'];
+      const m = disposition && /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+      if (m && m[1]) filename = decodeURIComponent(m[1]);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      message.success('导出成功');
+    } catch (error: any) {
+      message.error('导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // 导入 xlsx(antd Upload beforeUpload 拦截,手动上传)
+  const handleImport = async (file: File) => {
+    setImporting(true);
+    const form = new FormData();
+    form.append('file', file);
+    try {
+      const res = await api.post(`${API_BASE}/project-plan/import`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setImportResult(res.data);
+      reloadCurrentView();
+    } catch (error: any) {
+      message.error(error.response?.data?.detail || '导入失败');
+    } finally {
+      setImporting(false);
+    }
+    return false; // 阻止 antd 默认上传
+  };
+
   // 应用筛选(点「查询」)
   const applyFilters = () => {
     setPagination(prev => ({ ...prev, page: 1 }));
@@ -323,6 +393,24 @@ const ProjectPlan: React.FC = () => {
     }
   };
 
+  // 识别后端 409 日期越界冲突;命中则弹窗二选一并返回 true
+  // retry 由调用方提供:带上所选策略重发原请求
+  const handleDateConflict = (
+    error: any,
+    retry: (strategy: string) => Promise<void>
+  ): boolean => {
+    const d = error?.response?.data?.detail;
+    if (error?.response?.status !== 409 || !d?.options) return false;
+    setDateConflict({
+      code: d.code,
+      message: d.message,
+      options: d.options,
+      affectedChildren: d.affected_children,
+      retry
+    });
+    return true;
+  };
+
   // 删除单个任务(列表操作列)
   const deleteTask = async (taskId: number) => {
     try {
@@ -334,15 +422,22 @@ const ProjectPlan: React.FC = () => {
     }
   };
 
-  // 行内编辑保存
+  // 行内编辑保存(日期字段可能触发父子越界 409 → 弹窗二选一)
   const saveInlineEdit = async (taskId: number, field: string, value: any) => {
     setEditingCell(null);
-    try {
-      await api.put(`${API_BASE}/project-plan/tasks/${taskId}`, { [field]: value });
-      message.success('已保存');
+    const submit = async (strategy?: string) => {
+      const payload: any = { [field]: value };
+      if (strategy) payload.on_date_conflict = strategy;
+      const res = await api.put(`${API_BASE}/project-plan/tasks/${taskId}`, payload);
+      message.success(res.data?.message || '已保存');
       reloadCurrentView();
+    };
+    try {
+      await submit();
     } catch (error: any) {
-      message.error(error.response?.data?.detail || '保存失败');
+      if (handleDateConflict(error, (s) => submit(s))) return;
+      const detail = error.response?.data?.detail;
+      message.error(typeof detail === 'string' ? detail : '保存失败');
     }
   };
 
@@ -627,8 +722,14 @@ const ProjectPlan: React.FC = () => {
           <Button type="primary" icon={<PlusOutlined />} onClick={() => setTaskModalVisible(true)}>
             新增任务
           </Button>
-          <Button icon={<ImportOutlined />}>导入</Button>
-          <Button icon={<ExportOutlined />}>导出</Button>
+          <Upload
+            accept=".xlsx"
+            showUploadList={false}
+            beforeUpload={handleImport}
+          >
+            <Button icon={<ImportOutlined />} loading={importing}>导入</Button>
+          </Upload>
+          <Button icon={<ExportOutlined />} loading={exporting} onClick={handleExport}>导出</Button>
         </Space>
       </Space>
     </Card>
@@ -721,6 +822,8 @@ const ProjectPlan: React.FC = () => {
             <DatePicker
               size="small" autoFocus open style={{ width: '100%' }}
               defaultValue={val ? dayjs(val) : undefined}
+              // 开始日期不得晚于本行现有结束日期
+              disabledDate={(d) => !!record.plan_end_date && d.isAfter(dayjs(record.plan_end_date), 'day')}
               onOpenChange={(o) => { if (!o) setEditingCell(null); }}
               onChange={(d) => saveInlineEdit(record.id, 'plan_start_date', d ? d.format('YYYY-MM-DD') : null)}
             />
@@ -740,6 +843,8 @@ const ProjectPlan: React.FC = () => {
             <DatePicker
               size="small" autoFocus open style={{ width: '100%' }}
               defaultValue={val ? dayjs(val) : undefined}
+              // 结束日期不得早于本行现有开始日期
+              disabledDate={(d) => !!record.plan_start_date && d.isBefore(dayjs(record.plan_start_date), 'day')}
               onOpenChange={(o) => { if (!o) setEditingCell(null); }}
               onChange={(d) => saveInlineEdit(record.id, 'plan_end_date', d ? d.format('YYYY-MM-DD') : null)}
             />
@@ -1207,19 +1312,22 @@ const ProjectPlan: React.FC = () => {
           setTaskModalVisible(false);
           taskForm.resetFields();
           setChildLevel('选择父任务后自动确定');
+          setParentRange(null);
         }}
         onOk={() => {
           taskForm.validateFields().then(async (values) => {
-            try {
-              const payload = { ...values };
-              ['plan_start_date', 'plan_end_date'].forEach((f) => {
-                if (payload[f] && dayjs.isDayjs(payload[f])) payload[f] = payload[f].format('YYYY-MM-DD');
-              });
-              await api.post(`${API_BASE}/project-plan/tasks`, payload);
-              message.success('任务创建成功');
+            const base = { ...values };
+            ['plan_start_date', 'plan_end_date'].forEach((f) => {
+              if (base[f] && dayjs.isDayjs(base[f])) base[f] = base[f].format('YYYY-MM-DD');
+            });
+            const submit = async (strategy?: string) => {
+              const payload = strategy ? { ...base, on_date_conflict: strategy } : base;
+              const res = await api.post(`${API_BASE}/project-plan/tasks`, payload);
+              message.success(res.data?.message || '任务创建成功');
               setTaskModalVisible(false);
               taskForm.resetFields();
               setChildLevel('选择父任务后自动确定');
+              setParentRange(null);
               loadParentOptions(); // 新任务可能成为新的父选项
               if (activeView === 'kanban') {
                 loadKanban();
@@ -1227,8 +1335,13 @@ const ProjectPlan: React.FC = () => {
                 loadTasks();
               }
               loadSummary();
+            };
+            try {
+              await submit();
             } catch (error: any) {
-              message.error(error.response?.data?.detail || '创建任务失败');
+              if (handleDateConflict(error, (s) => submit(s))) return;
+              const detail = error.response?.data?.detail;
+              message.error(typeof detail === 'string' ? detail : '创建任务失败');
             }
           });
         }}
@@ -1242,6 +1355,9 @@ const ProjectPlan: React.FC = () => {
             if ('parent_id' in changed) {
               const p = parentOptions.find(o => o.id === changed.parent_id);
               setChildLevel(p ? `L${p.level + 1}（父任务 L${p.level}）` : '选择父任务后自动确定');
+              // 同步父任务日期范围,用于日历置灰(仍以后端 409 为最终判定)
+              setParentRange(p?.plan_start_date && p?.plan_end_date
+                ? { start: p.plan_start_date, end: p.plan_end_date } : null);
             }
           }}
         >
@@ -1265,7 +1381,13 @@ const ProjectPlan: React.FC = () => {
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="当前任务层级" tooltip="子任务层级 = 父任务层级 + 1">
+              <Form.Item
+                label="当前任务层级"
+                tooltip="子任务层级 = 父任务层级 + 1"
+                extra={parentRange
+                  ? `父任务可用区间：${parentRange.start} ~ ${parentRange.end}`
+                  : undefined}
+              >
                 <Input value={childLevel} readOnly style={{ background: '#f5f5f5', color: 'rgba(0,0,0,.55)' }} />
               </Form.Item>
             </Col>
@@ -1294,13 +1416,63 @@ const ProjectPlan: React.FC = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="计划开始" name="plan_start_date" rules={[{ required: true, message: '请选择计划开始' }]}>
-                <DatePicker style={{ width: '100%' }} />
+              <Form.Item
+                label="计划开始" name="plan_start_date"
+                dependencies={['plan_end_date']}
+                rules={[
+                  { required: true, message: '请选择计划开始' },
+                  // 兜底校验:防止先填结束再改开始造成倒挂
+                  ({ getFieldValue }) => ({
+                    validator: (_, v) => {
+                      const end = getFieldValue('plan_end_date');
+                      if (v && end && v.isAfter(end, 'day')) {
+                        return Promise.reject(new Error('计划开始不能晚于计划结束'));
+                      }
+                      return Promise.resolve();
+                    }
+                  })
+                ]}
+              >
+                <DatePicker
+                  style={{ width: '100%' }}
+                  disabledDate={(d) => {
+                    const end = taskForm.getFieldValue('plan_end_date');
+                    if (end && d.isAfter(end, 'day')) return true;
+                    // 限制在父任务范围内(子任务须完全落在父范围)
+                    if (parentRange && (d.isBefore(dayjs(parentRange.start), 'day')
+                      || d.isAfter(dayjs(parentRange.end), 'day'))) return true;
+                    return false;
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="计划结束" name="plan_end_date" rules={[{ required: true, message: '请选择计划结束' }]}>
-                <DatePicker style={{ width: '100%' }} />
+              <Form.Item
+                label="计划结束" name="plan_end_date"
+                dependencies={['plan_start_date']}
+                rules={[
+                  { required: true, message: '请选择计划结束' },
+                  ({ getFieldValue }) => ({
+                    validator: (_, v) => {
+                      const start = getFieldValue('plan_start_date');
+                      if (v && start && v.isBefore(start, 'day')) {
+                        return Promise.reject(new Error('计划结束不能早于计划开始'));
+                      }
+                      return Promise.resolve();
+                    }
+                  })
+                ]}
+              >
+                <DatePicker
+                  style={{ width: '100%' }}
+                  disabledDate={(d) => {
+                    const start = taskForm.getFieldValue('plan_start_date');
+                    if (start && d.isBefore(start, 'day')) return true;
+                    if (parentRange && (d.isBefore(dayjs(parentRange.start), 'day')
+                      || d.isAfter(dayjs(parentRange.end), 'day'))) return true;
+                    return false;
+                  }}
+                />
               </Form.Item>
             </Col>
           </Row>
@@ -1328,8 +1500,96 @@ const ProjectPlan: React.FC = () => {
         </Form>
       </Modal>
 
+      {/* 父子日期越界冲突：二选一后带策略重发（后端 409 驱动） */}
+      <Modal
+        title="计划日期超出父任务范围"
+        open={dateConflict !== null}
+        onCancel={() => setDateConflict(null)}
+        footer={[
+          <Button key="cancel" onClick={() => setDateConflict(null)} disabled={resolving}>
+            取消
+          </Button>,
+          ...(dateConflict?.options || []).map((opt, i) => (
+            <Button
+              key={opt.strategy}
+              type={i === 0 ? 'primary' : 'default'}
+              loading={resolving}
+              onClick={async () => {
+                if (!dateConflict) return;
+                setResolving(true);
+                try {
+                  await dateConflict.retry(opt.strategy);
+                  setDateConflict(null);
+                } catch (e: any) {
+                  const detail = e.response?.data?.detail;
+                  message.error(typeof detail === 'string' ? detail : '处理失败');
+                } finally {
+                  setResolving(false);
+                }
+              }}
+            >
+              {opt.label}
+            </Button>
+          ))
+        ]}
+      >
+        <p style={{ marginBottom: 12 }}>{dateConflict?.message}</p>
+
+        {dateConflict?.affectedChildren && dateConflict.affectedChildren.length > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ marginBottom: 6, color: 'rgba(0,0,0,.65)' }}>受影响的子任务：</div>
+            <ul style={{ margin: 0, paddingLeft: 20, maxHeight: 120, overflowY: 'auto' }}>
+              {dateConflict.affectedChildren.map((c) => (
+                <li key={c.id}>{c.name}（{c.range}）</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div style={{ background: '#fafafa', padding: 12, borderRadius: 4 }}>
+          {(dateConflict?.options || []).map((opt) => (
+            <div key={opt.strategy} style={{ marginBottom: 6 }}>
+              <strong>{opt.label}</strong>
+              <span style={{ color: 'rgba(0,0,0,.55)', marginLeft: 8 }}>
+                → {opt.preview.start} ~ {opt.preview.end}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Modal>
+
       {/* 状态选择浮层（fixed 定位于标签正下方，设计§6.4） */}
       {renderStatusPopover()}
+
+      {/* 导入结果报告 */}
+      <Modal
+        title="导入结果"
+        open={importResult !== null}
+        onCancel={() => setImportResult(null)}
+        footer={[<Button key="ok" type="primary" onClick={() => setImportResult(null)}>知道了</Button>]}
+        width={560}
+      >
+        {importResult && (
+          <>
+            <Space size="large" style={{ marginBottom: 16 }}>
+              <Statistic title="成功" value={importResult.success} valueStyle={{ color: '#52c41a' }} />
+              <Statistic title="跳过" value={importResult.skipped} valueStyle={{ color: '#fa8c16' }} />
+              <Statistic title="失败" value={importResult.failed} valueStyle={{ color: '#ff4d4f' }} />
+              <Statistic title="总计" value={importResult.total} />
+            </Space>
+            {importResult.details.length > 0 && (
+              <List
+                size="small"
+                header={<span style={{ fontWeight: 500 }}>明细（最多100条）</span>}
+                bordered
+                dataSource={importResult.details}
+                style={{ maxHeight: 300, overflowY: 'auto' }}
+                renderItem={(item) => <List.Item>{item}</List.Item>}
+              />
+            )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 };

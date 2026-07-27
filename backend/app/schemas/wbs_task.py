@@ -18,7 +18,8 @@ class WbsTaskBase(BaseModel):
 
     task_code: str = Field(..., description="任务编码（唯一）")
     priority: str = Field("中", description="优先级：高/中/低")
-    status: str = Field("待开始", description="状态：待开始/进行中/已完成/已暂停")
+    stage_type: Optional[str] = Field(None, description="关联阶段类型：到货验收/加电测试/校级验收/培训/无")
+    status: str = Field("待开始", description="状态：待开始/进行中/已完成/已延期/待补材料")
 
     plan_start_date: Optional[date] = Field(None, description="计划开始日期")
     plan_end_date: Optional[date] = Field(None, description="计划完成日期")
@@ -48,6 +49,7 @@ class WbsTaskUpdate(BaseModel):
 
     task_code: Optional[str] = None
     priority: Optional[str] = None
+    stage_type: Optional[str] = None
     status: Optional[str] = None
 
     plan_start_date: Optional[date] = None

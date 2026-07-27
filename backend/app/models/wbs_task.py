@@ -15,6 +15,7 @@ class WbsTask(Base):
     work_detail_l5 = Column(String(200))
 
     priority = Column(Enum('高', '中', '低'), nullable=False, default='中')
+    stage_type = Column(Enum('到货验收', '加电测试', '校级验收', '培训', '无'), nullable=True)
     status = Column(Enum('待开始', '进行中', '已完成', '已延期', '待补材料'), nullable=False, default='待开始')
 
     plan_start_date = Column(Date)
@@ -23,7 +24,12 @@ class WbsTask(Base):
     actual_end_date = Column(Date)
 
     responsible_person_id = Column(Integer, ForeignKey('users.id'))
-    school_id = Column(Integer, ForeignKey('schools.id'))
+    school_id = Column(Integer, ForeignKey('schools.id'), nullable=True)
+
+    parent_id = Column(Integer, ForeignKey('wbs_tasks.id'), nullable=True)  # 父任务(方案A,自关联)
+    progress = Column(Integer, nullable=False, default=0)  # 进度%(0-100,可手工编辑)
+
+    source_device_id = Column(Integer, ForeignKey('devices.id'), nullable=True)  # 来源设备记录ID(设备→WBS联动追溯)
 
     progress_note = Column(Text)
     deliverables = Column(String(255))

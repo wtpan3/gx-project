@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高新区"AI+教育"项目交付管理系统 - 交付进展原型 V2.2</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f0f2f5; color: rgba(0,0,0,.85); font-size: 14px; }
+  .app { display: flex; height: 100vh; }
+
+  /* 侧边栏 */
+  .sider { width: 220px; background: #001529; color: #fff; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .logo { height: 64px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.1); }
+  .menu { list-style: none; padding: 8px 0; }
+  .menu li { padding: 12px 24px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.65); }
+  .menu li.active { background: #1677ff; color: #fff; }
+  .menu li:hover:not(.active) { background: rgba(255,255,255,.08); color: #fff; }
+  .ico { font-size: 16px; }
+
+  /* 主区 */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .header { height: 56px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 10; }
+  .title { font-size: 16px; font-weight: 500; }
+  .user { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #1677ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+  .content { flex: 1; overflow-y: auto; padding: 16px 24px; }
+
+  /* 面包屑 */
+  .breadcrumb { font-size: 13px; color: rgba(0,0,0,.45); margin-bottom: 12px; }
+  .breadcrumb a { color: #1677ff; text-decoration: none; cursor: pointer; }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  /* 面板 */
+  .panel { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); margin-bottom: 16px; }
+  .panel-hd { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+  .panel-hd h3 { font-size: 16px; font-weight: 600; }
+  .panel-bd { padding: 20px; }
+
+  /* 学校状态统计卡片（6个，对齐首页环形图） */
+  .stage-cards { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px; }
+  .stage-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); padding: 16px; cursor: pointer; transition: all .2s; border: 1px solid transparent; }
+  .stage-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); border-color: #91caff; }
+  .stage-card.active { border-color: #1677ff; background: #f0f7ff; }
+  .stage-card .st-label { font-size: 13px; color: rgba(0,0,0,.45); margin-bottom: 8px; }
+  .stage-card .st-value { font-size: 24px; font-weight: 600; color: rgba(0,0,0,.85); line-height: 1; }
+  .stage-card .st-total { font-size: 12px; color: rgba(0,0,0,.35); margin-top: 6px; }
+  .stage-card.wait .st-value { color: #8c8c8c; }
+  .stage-card.decorate .st-value { color: #fa8c16; }
+  .stage-card.install .st-value { color: #1677ff; }
+  .stage-card.debug .st-value { color: #13c2c2; }
+  .stage-card.train .st-value { color: #722ed1; }
+  .stage-card.done .st-value { color: #52c41a; }
+
+  /* 学校列表（一校一行） */
+  .school-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .school-table th { padding: 12px; text-align: left; color: rgba(0,0,0,.45); font-weight: 500; background: #fafafa; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+  .school-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  .school-table tbody tr { cursor: pointer; transition: background .2s; }
+  .school-table tbody tr:hover { background: #f5faff; }
+  .st-name { font-size: 14px; font-weight: 600; color: rgba(0,0,0,.85); }
+  .row-bar { display: inline-block; width: 120px; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; vertical-align: middle; margin-right: 8px; }
+  .row-bar .rb-fill { height: 100%; background: linear-gradient(90deg, #1677ff, #52c41a); border-radius: 4px; }
+  .stage-dots { display: flex; gap: 10px; font-size: 12px; }
+  .stage-dot-item { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+  .stage-dot-item .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot.done { background: #52c41a; }
+  .dot.doing { background: #fa8c16; }
+  .dot.wait { background: #d9d9d9; }
+  .dot.missing { background: #ff4d4f; }
+
+  /* 状态标签 */
+  .status-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; }
+  .status-tag.wait { background: #fafafa; color: #8c8c8c; border: 1px solid #d9d9d9; }
+  .status-tag.decorate { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .status-tag.install { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+  .status-tag.debug { background: #e6fffb; color: #13c2c2; border: 1px solid #87e8de; }
+  .status-tag.train { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+  .status-tag.done { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+
+  /* 甘特图（参照首页） */
+  .gantt-container { overflow-x: auto; }
+  .gantt { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; min-width: 900px; }
+  .gantt th, .gantt td { padding: 8px 6px; border-bottom: 1px solid #f5f5f5; }
+  .gantt th { color: rgba(0,0,0,.45); font-weight: 500; background: #fafafa; white-space: nowrap; text-align: center; }
+  .gantt td { text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gantt th.stage, .gantt td.stage { width: 110px; }
+  .gantt th.task, .gantt td.task { width: 160px; }
+  .gantt td.date { font-size: 12px; color: rgba(0,0,0,.65); }
+  .gantt th.axis { padding: 0; min-width: 360px; }
+  .gantt th.axis .gbar-months { display: flex; font-size: 11px; color: rgba(0,0,0,.45); font-weight: 500; }
+  .gantt th.axis .gbar-months span { flex: 1; text-align: center; border-left: 1px solid #f0f0f0; padding: 4px 0; }
+  .gantt th.axis .gbar-months span:first-child { border-left: none; }
+  .gbar-cell { position: relative; height: 22px; }
+  .gbar { position: absolute; top: 4px; height: 14px; border-radius: 7px; }
+  .gbar.done { background: #52c41a; }
+  .gbar.doing { background: #fa8c16; }
+  .gbar.todo { background: #d9d9d9; }
+  .st-done { color: #52c41a; font-weight: 600; }
+  .st-doing { color: #fa8c16; font-weight: 600; }
+  .st-todo { color: rgba(0,0,0,.45); font-weight: 600; }
+
+  /* 通用小表格（交付进展/培训记录） */
+  .mini-tb { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mini-tb th { padding: 10px; text-align: left; color: rgba(0,0,0,.45); font-weight: 500; background: #fafafa; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+  .mini-tb td { padding: 10px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+  .mini-tb tbody tr:hover { background: #f5faff; }
+  .link-btn { border: none; background: transparent; color: #1677ff; cursor: pointer; padding: 0; font-size: 13px; }
+  .link-btn:hover { color: #4096ff; }
+
+  /* 材料标签 */
+  .material-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 6px; }
+  .material-tag.full { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+  .material-tag.partial { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+  .material-tag.empty { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+
+  /* 筛选栏 */
+  .filters { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .filters label { font-size: 13px; color: rgba(0,0,0,.65); }
+  .filters select { border: 1px solid #d9d9d9; border-radius: 6px; padding: 6px 10px; font-size: 13px; color: rgba(0,0,0,.85); background:#fff; min-width: 140px; }
+  .filters select:focus { outline: none; border-color: #1677ff; }
+
+  /* 按钮 */
+  .btn { font-size: 13px; padding: 6px 14px; border-radius: 6px; border: 1px solid #d9d9d9; background: #fff; cursor: pointer; color: rgba(0,0,0,.75); transition: all .2s; }
+  .btn:hover { border-color: #1677ff; color: #1677ff; }
+  .btn-primary { background: #1677ff; color: #fff; border-color: #1677ff; }
+  .btn-primary:hover { background: #4096ff; border-color: #4096ff; }
+
+  /* 单校详情页 */
+  .detail-page { display: none; }
+  .detail-page.active { display: block; }
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px; font-size: 13px; margin-bottom: 16px; }
+  .info-item { display: flex; }
+  .info-k { color: rgba(0,0,0,.45); min-width: 80px; }
+  .info-v { color: rgba(0,0,0,.85); font-weight: 500; }
+
+  /* 模块卡片网格（单校详情的6模块） */
+  .module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .module-card { background: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #f0f0f0; }
+  .module-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: rgba(0,0,0,.85); }
+  .module-stat { display: flex; align-items: center; gap: 16px; font-size: 13px; margin-bottom: 8px; }
+  .module-stat .ms-label { color: rgba(0,0,0,.45); }
+  .module-stat .ms-value { font-weight: 600; color: rgba(0,0,0,.85); }
+  .module-list { font-size: 12px; color: rgba(0,0,0,.65); line-height: 1.8; }
+  .module-list li { list-style: none; padding-left: 12px; position: relative; }
+  .module-list li:before { content: '•'; position: absolute; left: 0; color: #1677ff; }
+
+  /* 提示说明 */
+  .note-tip { background: #e6f4ff; border: 1px solid #91caff; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #1677ff; margin-bottom: 16px; line-height: 1.6; }
+
+  /* 弹窗 */
+  .modal-mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; }
+  .modal-mask.open { display: flex; align-items: center; justify-content: center; }
+  .modal { width: 520px; max-width: 92vw; max-height: 86vh; background: #fff; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,.2); overflow-y: auto; }
+  .modal-hd { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+  .modal-hd h3 { font-size: 16px; font-weight: 600; }
+  .modal-close { cursor: pointer; font-size: 20px; color: rgba(0,0,0,.45); border: none; background: none; }
+  .modal-bd { padding: 24px; }
+  .form-row { margin-bottom: 16px; }
+  .form-row label { display: block; font-size: 13px; color: rgba(0,0,0,.65); margin-bottom: 6px; }
+  .form-row label .req { color: #ff4d4f; margin-left: 2px; }
+  .form-row input, .form-row select, .form-row textarea { width: 100%; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px 10px; font-size: 13px; color: rgba(0,0,0,.85); box-sizing: border-box; }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: #1677ff; }
+  .form-row .hint { font-size: 12px; color: rgba(0,0,0,.4); margin-top: 4px; }
+  .form-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .modal-ft { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 8px; }
+  .upload-box { border: 2px dashed #d9d9d9; border-radius: 8px; padding: 20px; text-align: center; color: rgba(0,0,0,.45); cursor: pointer; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="sider">
+    <div class="logo">项目交付管理</div>
+    <ul class="menu">
+      <li><span class="ico">🏠</span>首页</li>
+      <li><span class="ico">📋</span>项目计划</li>
+      <li class="active"><span class="ico">🚚</span>交付进展</li>
+      <li><span class="ico">⚠️</span>风险管理</li>
+      <li><span class="ico">🖥️</span>设备信息</li>
+      <li><span class="ico">📚</span>培训管理</li>
+      <li><span class="ico">📄</span>报告管理</li>
+      <li><span class="ico">🗂️</span>交付材料库</li>
+      <li><span class="ico">🔄</span>项目复盘</li>
+      <li><span class="ico">⚙️</span>系统管理</li>
+    </ul>
+  </aside>
+
+  <!-- 主区 -->
+  <div class="main">
+    <!-- 顶栏 -->
+    <header class="header">
+      <div style="display:flex;align-items:center;">
+        <span class="title">高新区"AI+教育"项目交付管理系统 / 交付进展</span>
+      </div>
+      <div class="user"><span class="avatar">张</span><span>张项目经理 ▾</span></div>
+    </header>
+
+    <div class="content">
+      <div class="note-tip">
+        <strong>原型说明:</strong> 本页为交付进展（整合学校看板）静态原型。<strong>两层结构</strong>：<br>
+        <strong>第一层"交付进展总览":</strong> ① 顶部6个学校状态卡片（待启动/装修中/安装中/调试中/培训中/已完成，对齐首页环形图）② 一校一行的列表（支持任意数量学校，不限4所）③ 筛选：学校状态/材料完整性 ④ 导出项目交付进展报告。<br>
+        <strong>第二层"单校全景详情":</strong> ① 学校基本信息 + 设备概况（合并一块）② 进展甘特图（该校自己的计划树，参照首页形式）③ 交付进展（5阶段可编辑状态 + 上传佐证材料）④ 培训情况（培训记录列表，每次人数+资料上传，仅校级培训）⑤ 风险管理 ⑥ 导出学校综合报告。<br>
+        <strong>学校状态（6种，对齐首页环形图）:</strong> 待启动/装修中/安装中/调试中/培训中/已完成。顶部卡片展示各状态学校数量；学校列表显示当前状态标签。<br>
+        <strong>数据来源:</strong> 学校状态来自WBS任务汇总判断；交付阶段状态来自L4任务；材料完整性来自交付材料库；设备清单关联设备信息模块；培训情况关联培训管理模块。<br>
+        <strong>交互:</strong> 点击学校状态卡片筛选对应学校；点击学校列表行下钻到单校详情页；单校详情内可编辑交付状态、上传材料、新增培训记录；点击"查看设备清单"等链接跳转对应模块（原型示意）；点击面包屑返回总览。<br>
+        <strong>V2.2 整合:</strong> 原"学校看板"功能整合到此模块的第二层"单校全景详情"。删除"交付材料库"卡片（材料库是最终汇总的独立模块）。
+      </div>
+
+      <!-- ========== 第一层：交付进展总览 ========== -->
+      <div id="overviewPage" class="overview-page">
+        <div class="breadcrumb">首页 > 业务模块 > 交付进展</div>
+
+        <!-- 学校状态统计卡片（6个，对齐首页学校交付进度环形图） -->
+        <div class="stage-cards">
+          <div class="stage-card wait" onclick="filterStatus(this,'待启动')">
+            <div class="st-label">待启动</div>
+            <div class="st-value">0</div>
+            <div class="st-total">所学校</div>
+          </div>
+          <div class="stage-card decorate" onclick="filterStatus(this,'装修中')">
+            <div class="st-label">装修中</div>
+            <div class="st-value">0</div>
+            <div class="st-total">所学校</div>
+          </div>
+          <div class="stage-card install" onclick="filterStatus(this,'安装中')">
+            <div class="st-label">安装中</div>
+            <div class="st-value">1</div>
+            <div class="st-total">所学校</div>
+          </div>
+          <div class="stage-card debug" onclick="filterStatus(this,'调试中')">
+            <div class="st-label">调试中</div>
+            <div class="st-value">1</div>
+            <div class="st-total">所学校</div>
+          </div>
+          <div class="stage-card train" onclick="filterStatus(this,'培训中')">
+            <div class="st-label">培训中</div>
+            <div class="st-value">0</div>
+            <div class="st-total">所学校</div>
+          </div>
+          <div class="stage-card done active" onclick="filterStatus(this,'已完成')">
+            <div class="st-label">已完成</div>
+            <div class="st-value">2</div>
+            <div class="st-total">所学校</div>
+          </div>
+        </div>
+
+        <!-- 面板：项目整体培训情况汇总 -->
+        <div class="panel">
+          <div class="panel-hd">
+            <h3>项目整体培训情况</h3>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" onclick="exportTrain()">📤 导出培训明细</button>
+              <button class="btn" onclick="openTrainModal()">➕ 新增培训记录</button>
+            </div>
+          </div>
+          <div class="panel-bd">
+            <!-- 汇总卡片：培训场次 / 参与人次(区分) / 材料上传(区分) -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+              <div style="background:#fafafa;border-radius:8px;padding:18px;text-align:center;cursor:pointer;" onclick="drillTrain('场次')">
+                <div style="font-size:13px;color:rgba(0,0,0,.45);margin-bottom:8px;">培训场次 🔍</div>
+                <div style="font-size:28px;font-weight:600;color:#722ed1;">14</div>
+                <div style="font-size:12px;color:rgba(0,0,0,.35);margin-top:6px;">校级 11 场 + 区级 3 场</div>
+              </div>
+              <div style="background:#fafafa;border-radius:8px;padding:18px;text-align:center;cursor:pointer;" onclick="drillTrain('人次')">
+                <div style="font-size:13px;color:rgba(0,0,0,.45);margin-bottom:8px;">累计参与人次 🔍</div>
+                <div style="font-size:28px;font-weight:600;color:#1677ff;">486</div>
+                <div style="font-size:12px;color:rgba(0,0,0,.35);margin-top:6px;">校级 340 人次 · 区级 146 人次</div>
+              </div>
+              <div style="background:#fafafa;border-radius:8px;padding:18px;text-align:center;cursor:pointer;" onclick="drillTrain('材料')">
+                <div style="font-size:13px;color:rgba(0,0,0,.45);margin-bottom:8px;">培训材料上传 🔍</div>
+                <div style="font-size:28px;font-weight:600;color:#52c41a;">86%</div>
+                <div style="font-size:12px;color:rgba(0,0,0,.35);margin-top:6px;">校级 10/11 (91%) · 区级 2/3 (67%)</div>
+              </div>
+            </div>
+
+            <!-- 培训记录列表（区级+校级） -->
+            <div style="margin-top:20px;">
+              <div style="font-size:13px;font-weight:600;color:rgba(0,0,0,.65);margin-bottom:10px;">培训记录明细</div>
+              <div class="gantt-container">
+              <table class="mini-tb" style="min-width:1120px;">
+                <thead>
+                  <tr>
+                    <th style="width:70px;">培训规格</th>
+                    <th style="min-width:180px;">培训名称</th>
+                    <th style="width:90px;">培训类型</th>
+                    <th style="width:105px;">培训时间</th>
+                    <th style="width:150px;">组织学校/机构</th>
+                    <th style="width:120px;">参训对象</th>
+                    <th style="width:120px;">培训地点</th>
+                    <th style="width:75px;">参与人次</th>
+                    <th style="width:85px;">完成状态</th>
+                    <th style="width:120px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="status-tag train">区级</span></td>
+                    <td>AI教育综合应用区级培训</td>
+                    <td>集中培训</td>
+                    <td>2026-07-10</td>
+                    <td>高新区教育局</td>
+                    <td>各校骨干教师</td>
+                    <td>高新区教师发展中心</td>
+                    <td>68 人</td>
+                    <td><span class="status-tag done">已完成</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openTrainEditModal('区级')">编辑</button> · <button class="link-btn" onclick="previewFile('区级培训签到表.pdf')">附件</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-tag train">区级</span></td>
+                    <td>智慧课堂区级观摩培训</td>
+                    <td>现场培训</td>
+                    <td>2026-06-28</td>
+                    <td>高新区教研中心</td>
+                    <td>学科教研员</td>
+                    <td>KDGX学校报告厅</td>
+                    <td>52 人</td>
+                    <td><span class="status-tag done">已完成</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openTrainEditModal('区级')">编辑</button> · <button class="link-btn" onclick="previewFile('区级观摩签到表.pdf')">附件</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-tag done">校级</span></td>
+                    <td>智慧体育应用培训</td>
+                    <td>现场培训</td>
+                    <td>2026-06-15</td>
+                    <td>KDGX</td>
+                    <td>体育组教师</td>
+                    <td>本校体育馆</td>
+                    <td>42 人</td>
+                    <td><span class="status-tag done">已完成</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openTrainEditModal('校级')">编辑</button> · <button class="link-btn" onclick="previewFile('KDGX签到表.pdf')">附件</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="status-tag done">校级</span></td>
+                    <td>AI英语听说教学培训</td>
+                    <td>现场培训</td>
+                    <td>2026-06-20</td>
+                    <td>168</td>
+                    <td>英语组教师</td>
+                    <td>本校录播教室</td>
+                    <td>38 人</td>
+                    <td><span class="status-tag decorate">进行中</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openTrainEditModal('校级')">编辑</button> · <button class="link-btn" onclick="previewFile('168签到表.pdf')">附件</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
+              <div style="font-size:12px;color:rgba(0,0,0,.45);padding:10px 4px 0;">共 14 场培训（区级 3 + 校级 11），此处展示 4 条示例 · 完成状态：未开始/进行中/已完成</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 面板：学校卡片列表 -->
+        <div class="panel">
+          <div class="panel-hd">
+            <h3>学校交付情况（4所学校）</h3>
+            <div style="display:flex;gap:8px;">
+              <button class="btn">📥 导出交付进展报告</button>
+            </div>
+          </div>
+          <div class="panel-bd">
+            <!-- 筛选条件 -->
+            <div class="filters">
+              <label>学校状态:</label>
+              <select><option>全部</option><option>待启动</option><option>装修中</option><option>安装中</option><option>调试中</option><option>培训中</option><option>已完成</option></select>
+              <label>材料完整性:</label>
+              <select><option>全部</option><option>齐全</option><option>部分缺失</option><option>缺失</option></select>
+              <button class="btn">🔍 查询</button>
+              <button class="btn">🔄 重置</button>
+            </div>
+
+            <!-- 学校列表（一校一行，支持任意数量学校） -->
+            <table class="school-table">
+              <thead>
+                <tr>
+                  <th style="width:120px;">学校</th>
+                  <th style="width:90px;">当前状态</th>
+                  <th style="width:180px;">整体进度</th>
+                  <th style="width:120px;">验收材料完整性</th>
+                  <th style="width:120px;">培训完成情况</th>
+                  <th style="width:auto;">备注</th>
+                  <th style="width:90px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- KDGX - 已完成 -->
+                <tr onclick="showSchoolDetail('KDGX')">
+                  <td><span class="st-name">KDGX</span></td>
+                  <td><span class="status-tag done">已完成</span></td>
+                  <td><span class="row-bar"><span class="rb-fill" style="width:100%"></span></span><span style="color:#52c41a;font-weight:600;">100%</span></td>
+                  <td><span class="material-tag full">材料齐全</span></td>
+                  <td><span class="status-tag done">已完成</span></td>
+                  <td style="font-size:12px;color:rgba(0,0,0,.45);">验收材料齐全，培训已完成</td>
+                  <td onclick="event.stopPropagation()"><button class="link-btn" onclick="showSchoolDetail('KDGX')">查看详情</button></td>
+                </tr>
+                <!-- 168 - 调试中 -->
+                <tr onclick="showSchoolDetail('168')">
+                  <td><span class="st-name">168</span></td>
+                  <td><span class="status-tag debug">调试中</span></td>
+                  <td><span class="row-bar"><span class="rb-fill" style="width:60%"></span></span><span style="font-weight:600;">60%</span></td>
+                  <td><span class="material-tag partial">部分缺失</span></td>
+                  <td><span class="status-tag decorate">进行中</span></td>
+                  <td style="font-size:12px;color:rgba(0,0,0,.45);">校级验收材料缺失，培训进行中</td>
+                  <td onclick="event.stopPropagation()"><button class="link-btn" onclick="showSchoolDetail('168')">查看详情</button></td>
+                </tr>
+                <!-- CX - 已完成 -->
+                <tr onclick="showSchoolDetail('CX')">
+                  <td><span class="st-name">CX</span></td>
+                  <td><span class="status-tag done">已完成</span></td>
+                  <td><span class="row-bar"><span class="rb-fill" style="width:100%"></span></span><span style="color:#52c41a;font-weight:600;">100%</span></td>
+                  <td><span class="material-tag full">材料齐全</span></td>
+                  <td><span class="status-tag done">已完成</span></td>
+                  <td style="font-size:12px;color:rgba(0,0,0,.45);">全部验收材料已上传，培训已完成</td>
+                  <td onclick="event.stopPropagation()"><button class="link-btn" onclick="showSchoolDetail('CX')">查看详情</button></td>
+                </tr>
+                <!-- XZ - 安装中 -->
+                <tr onclick="showSchoolDetail('XZ')">
+                  <td><span class="st-name">XZ</span></td>
+                  <td><span class="status-tag install">安装中</span></td>
+                  <td><span class="row-bar"><span class="rb-fill" style="width:35%"></span></span><span style="color:#fa8c16;font-weight:600;">35%</span></td>
+                  <td><span class="material-tag empty">材料缺失</span></td>
+                  <td><span class="status-tag wait">未开始</span></td>
+                  <td style="font-size:12px;color:rgba(0,0,0,.45);">验收材料待上传，培训未开始</td>
+                  <td onclick="event.stopPropagation()"><button class="link-btn" onclick="showSchoolDetail('XZ')">查看详情</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <div style="font-size:12px;color:rgba(0,0,0,.45);padding:12px 4px 0;">当前展示 4 所（实际学校数量不限，随"学校管理"录入自动增加） · 验收材料包含：到货验收、加电测试、校级验收、其他（全部上传后判定为"材料齐全"）</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== 第二层：单校全景详情 ========== -->
+      <div id="detailPage" class="detail-page">
+        <div class="breadcrumb">
+          首页 > 业务模块 > <a onclick="backToOverview()">交付进展</a> > <span id="schoolNameBread">KDGX</span>
+        </div>
+
+        <!-- 面板1：学校基本信息 + 设备信息（合并） -->
+        <div class="panel">
+          <div class="panel-hd">
+            <h3><span id="schoolNameTitle">KDGX</span> 基本信息 & 设备概况</h3>
+            <button class="btn">📄 导出学校综合报告</button>
+          </div>
+          <div class="panel-bd">
+            <div style="font-size:13px;font-weight:600;color:rgba(0,0,0,.55);margin-bottom:10px;">📌 基本信息</div>
+            <div class="info-grid">
+              <div class="info-item"><div class="info-k">学校全称:</div><div class="info-v">合肥高新区KDGX学校</div></div>
+              <div class="info-item"><div class="info-k">所属区域:</div><div class="info-v">高新区</div></div>
+              <div class="info-item"><div class="info-k">学校地址:</div><div class="info-v">高新区创新大道123号</div></div>
+              <div class="info-item"><div class="info-k">校方联系人:</div><div class="info-v">李校长 / 138xxxx1234</div></div>
+              <div class="info-item"><div class="info-k">校园经理:</div><div class="info-v">张三</div></div>
+              <div class="info-item"><div class="info-k">当前状态:</div><div class="info-v" style="color:#52c41a;">已完成（整体完成度100%）</div></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:rgba(0,0,0,.55);margin:16px 0 10px;border-top:1px solid #f0f0f0;padding-top:14px;">🖥️ 设备概况 <button class="link-btn" style="font-weight:400;margin-left:8px;" onclick="jumpToModule('设备信息','KDGX')">查看设备清单 →</button></div>
+            <div class="info-grid">
+              <div class="info-item"><div class="info-k">设备总数:</div><div class="info-v">78 台</div></div>
+              <div class="info-item"><div class="info-k">运行中:</div><div class="info-v" style="color:#52c41a;">30 台</div></div>
+              <div class="info-item"><div class="info-k">待发货:</div><div class="info-v">5 台</div></div>
+              <div class="info-item"><div class="info-k">已到货:</div><div class="info-v">8 台</div></div>
+              <div class="info-item"><div class="info-k">已安装:</div><div class="info-v">20 台</div></div>
+              <div class="info-item"><div class="info-k">已调试:</div><div class="info-v">15 台</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 面板2：学校交付计划（可折叠层级+甘特图+责任人+实际结束时间） -->
+        <div class="panel">
+          <div class="panel-hd">
+            <h3>学校交付计划</h3>
+            <div style="display:flex;gap:8px;">
+              <button class="btn" onclick="openTaskModal()">➕ 新增任务</button>
+              <button class="btn">📥 批量导入</button>
+            </div>
+          </div>
+          <div class="panel-bd" style="padding:0;">
+            <div style="font-size:12px;color:rgba(0,0,0,.45);padding:12px 12px 8px;">数据绑定项目计划（WBS），显示该校关联的计划任务 · 责任人默认为校园经理 · 实际结束时间默认为维护日期当日，可修改 · <span style="color:#fa8c16;">仅"完成状态""实际结束时间"可编辑；删除任务仅管理员可操作（防止孤儿任务）</span></div>
+            <div class="gantt-container">
+              <table class="gantt">
+                <thead>
+                  <tr>
+                    <th style="width:200px;">任务名称（层级L2-L3）</th>
+                    <th style="width:100px;">计划开始</th>
+                    <th style="width:100px;">计划完成</th>
+                    <th class="axis"><div class="gbar-months"><span>5月</span><span>6月</span><span>7月</span><span>8月</span><span>9月</span><span>10月</span></div></th>
+                    <th style="width:90px;">责任人</th>
+                    <th style="width:90px;">完成状态</th>
+                    <th style="width:100px;">实际结束</th>
+                    <th style="width:80px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- L2: 硬件交付 -->
+                  <tr>
+                    <td style="text-align:left;padding-left:8px;"><span style="cursor:pointer;color:#1677ff;" onclick="toggleRow(this)">▼</span> <strong>硬件交付</strong></td>
+                    <td class="date">2026-05-01</td><td class="date">2026-07-20</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:0;width:40%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-07-18</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                  <!-- L3: 设备到货验收 -->
+                  <tr class="child-row">
+                    <td style="text-align:left;padding-left:32px;">设备到货验收</td>
+                    <td class="date">2026-05-01</td><td class="date">2026-05-25</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:0;width:20%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-05-24</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                  <!-- L3: 加电测试完成 -->
+                  <tr class="child-row">
+                    <td style="text-align:left;padding-left:32px;">加电测试完成</td>
+                    <td class="date">2026-05-20</td><td class="date">2026-06-20</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:18%;width:22%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-06-19</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                  <!-- L2: 应用培训 -->
+                  <tr>
+                    <td style="text-align:left;padding-left:8px;"><span style="cursor:pointer;color:#1677ff;" onclick="toggleRow(this)">▼</span> <strong>应用培训</strong></td>
+                    <td class="date">2026-06-15</td><td class="date">2026-07-25</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:38%;width:24%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-07-24</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                  <!-- L3: 教师培训完成 -->
+                  <tr class="child-row">
+                    <td style="text-align:left;padding-left:32px;">教师培训完成</td>
+                    <td class="date">2026-06-15</td><td class="date">2026-07-25</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:38%;width:24%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-07-25</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                  <!-- L2: 验收移交 -->
+                  <tr>
+                    <td style="text-align:left;padding-left:8px;"><span style="cursor:pointer;color:#1677ff;" onclick="toggleRow(this)">▼</span> <strong>验收移交</strong></td>
+                    <td class="date">2026-07-20</td><td class="date">2026-08-30</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:60%;width:24%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-08-28</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                  <!-- L3: 校级验收 -->
+                  <tr class="child-row">
+                    <td style="text-align:left;padding-left:32px;">校级验收</td>
+                    <td class="date">2026-07-20</td><td class="date">2026-08-30</td>
+                    <td class="gbar-cell"><div class="gbar done" style="left:60%;width:24%"></div></td>
+                    <td>张三</td>
+                    <td class="status st-done">已完成</td>
+                    <td class="date">2026-08-28</td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn">编辑</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="font-size:12px;color:rgba(0,0,0,.45);padding:8px 12px;">图例：<span style="color:#52c41a">■</span>已完成 <span style="color:#fa8c16">■</span>进行中 <span style="color:#d9d9d9">■</span>未开始 · 点击 ▼ 折叠/展开子任务 · 点击任务行查看明细</div>
+          </div>
+        </div>
+
+        <!-- 面板3和4并列：验收材料 + 培训情况 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <!-- 左：验收材料（原"交付进展"） -->
+          <div class="panel" style="margin-bottom:0;">
+            <div class="panel-hd">
+              <h3>验收材料</h3>
+              <span style="font-size:12px;color:rgba(0,0,0,.45);">点击附件预览</span>
+            </div>
+            <div class="panel-bd" style="padding:0;max-height:400px;overflow-y:auto;">
+              <table class="mini-tb">
+                <thead>
+                  <tr>
+                    <th style="width:140px;">材料类型</th>
+                    <th>附件</th>
+                    <th style="width:110px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>到货验收</td>
+                    <td><button class="link-btn" onclick="previewFile('到货验收表.pdf')">📄 到货验收表.pdf</button> <span class="material-tag full">已上传</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openUploadModal('到货验收')">上传</button></td>
+                  </tr>
+                  <tr>
+                    <td>加电测试</td>
+                    <td><button class="link-btn" onclick="previewFile('加电测试报告.pdf')">📄 加电测试报告.pdf</button> <span class="material-tag full">已上传</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openUploadModal('加电测试')">上传</button></td>
+                  </tr>
+                  <tr>
+                    <td>校级验收</td>
+                    <td><button class="link-btn" onclick="previewFile('校级验收报告.pdf')">📄 校级验收报告.pdf</button> <span class="material-tag full">已上传</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openUploadModal('校级验收')">上传</button></td>
+                  </tr>
+                  <tr>
+                    <td>其他材料</td>
+                    <td><span style="color:rgba(0,0,0,.45);">暂无</span></td>
+                    <td onclick="event.stopPropagation()"><button class="link-btn" onclick="openUploadModal('其他材料')">上传</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 右：培训情况（关联本校培训记录，只读展示） -->
+          <div class="panel" style="margin-bottom:0;">
+            <div class="panel-hd">
+              <h3>培训情况</h3>
+              <span style="font-size:12px;color:rgba(0,0,0,.45);">关联组织单位=本校的培训记录（在项目培训中维护）</span>
+            </div>
+            <div class="panel-bd" style="padding:0;max-height:400px;overflow-y:auto;">
+              <table class="mini-tb">
+                <thead>
+                  <tr>
+                    <th style="min-width:160px;">培训名称</th>
+                    <th style="width:110px;">培训日期</th>
+                    <th style="width:60px;">人数</th>
+                    <th style="width:160px;">材料</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>智慧体育应用培训</td>
+                    <td>2026-06-15</td>
+                    <td>42 人</td>
+                    <td><button class="link-btn" onclick="previewFile('签到表.pdf')">📄 签到表</button> <span class="material-tag full">已上传</span></td>
+                  </tr>
+                  <tr>
+                    <td>AI英语听说教学培训</td>
+                    <td>2026-06-20</td>
+                    <td>38 人</td>
+                    <td><button class="link-btn" onclick="previewFile('签到表2.pdf')">📄 签到表</button> <span class="material-tag partial">缺照片</span></td>
+                  </tr>
+                  <tr>
+                    <td>智慧后勤系统培训</td>
+                    <td>2026-07-08</td>
+                    <td>25 人</td>
+                    <td><button class="link-btn" onclick="previewFile('签到表3.pdf')">📄 签到表</button> <span class="material-tag full">已上传</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style="font-size:12px;color:rgba(0,0,0,.45);padding:10px 12px;border-top:1px solid #f0f0f0;">本校校级培训合计 3 场，累计 105 人次 · 新增/编辑在"项目整体培训情况"中操作</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- 新增任务弹窗 -->
+<div class="modal-mask" id="taskModal" onclick="closeTaskModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <h3>新增交付计划任务</h3>
+      <button class="modal-close" onclick="closeTaskModal()">×</button>
+    </div>
+    <div class="modal-bd">
+      <div class="form-row">
+        <label>上级任务<span class="req">*</span></label>
+        <select>
+          <option>硬件交付（L2）</option>
+          <option>应用培训（L2）</option>
+          <option>验收移交（L2）</option>
+          <option>— 作为新的 L2 顶层任务 —</option>
+        </select>
+        <div class="hint">选择归属的上级任务；层级支持 L2-L3</div>
+      </div>
+      <div class="form-row">
+        <label>任务名称<span class="req">*</span></label>
+        <input type="text" placeholder="如：设备调试完成">
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>计划开始<span class="req">*</span></label>
+          <input type="date">
+        </div>
+        <div class="form-row">
+          <label>计划完成<span class="req">*</span></label>
+          <input type="date">
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>责任人</label>
+          <input type="text" value="张三（校园经理）" readonly>
+          <div class="hint">默认为该校校园经理，可修改</div>
+        </div>
+        <div class="form-row">
+          <label>完成状态</label>
+          <select><option>未开始</option><option>进行中</option><option>已完成</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeTaskModal()">取消</button>
+      <button class="btn btn-primary" onclick="closeTaskModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增培训记录弹窗 -->
+<div class="modal-mask" id="trainModal" onclick="closeTrainModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <h3 id="trainModalTitle">新增培训记录</h3>
+      <button class="modal-close" onclick="closeTrainModal()">×</button>
+    </div>
+    <div class="modal-bd">
+      <div class="form-2col">
+        <div class="form-row">
+          <label>培训规格<span class="req">*</span></label>
+          <select id="trainScope" onchange="toggleOrgLabel()"><option>校级</option><option>区级</option></select>
+        </div>
+        <div class="form-row">
+          <label>培训类型<span class="req">*</span></label>
+          <select><option>现场培训</option><option>线上培训</option><option>集中培训</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>培训名称<span class="req">*</span></label>
+        <input type="text" placeholder="如：智慧体育应用培训">
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>培训时间<span class="req">*</span></label>
+          <input type="date">
+        </div>
+        <div class="form-row">
+          <label>参与人次<span class="req">*</span></label>
+          <input type="number" placeholder="如：42">
+        </div>
+      </div>
+      <div class="form-row">
+        <label id="orgLabel">培训组织学校<span class="req">*</span></label>
+        <select id="orgSelect"><option>KDGX</option><option>168</option><option>CX</option><option>XZ</option></select>
+        <div class="hint">校级培训选组织学校；区级培训填组织机构（如高新区教育局）</div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>参训对象<span class="req">*</span></label>
+          <input type="text" placeholder="如：体育组教师">
+        </div>
+        <div class="form-row">
+          <label>培训地点<span class="req">*</span></label>
+          <input type="text" placeholder="如：本校体育馆">
+        </div>
+      </div>
+      <div class="form-2col">
+        <div class="form-row">
+          <label>完成状态<span class="req">*</span></label>
+          <select><option>未开始</option><option>进行中</option><option>已完成</option></select>
+        </div>
+        <div class="form-row">
+          <label>关联WBS任务</label>
+          <select><option>— 不关联 —</option><option>应用培训 / 教师培训完成</option><option>硬件交付 / 设备到货验收</option><option>验收移交 / 校级验收</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>培训材料</label>
+        <div class="upload-box">📁 点击上传签到表、现场照片等（支持多文件）</div>
+        <div class="hint" id="uploadedHint" style="display:none;">已上传：签到表.pdf、现场照片.jpg（点击可预览）</div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeTrainModal()">取消</button>
+      <button class="btn btn-primary" onclick="closeTrainModal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 上传验收材料弹窗 -->
+<div class="modal-mask" id="uploadModal" onclick="closeUploadModal()">
+  <div class="modal" style="width:460px;" onclick="event.stopPropagation()">
+    <div class="modal-hd">
+      <h3>上传<span id="uploadTypeName">验收</span>材料</h3>
+      <button class="modal-close" onclick="closeUploadModal()">×</button>
+    </div>
+    <div class="modal-bd">
+      <div class="form-row">
+        <label>材料类型</label>
+        <input type="text" id="uploadTypeInput" readonly>
+      </div>
+      <div class="form-row">
+        <label>选择文件<span class="req">*</span></label>
+        <div class="upload-box">📁 点击选择或拖拽文件到此处（支持 PDF/图片/Word，可多选）</div>
+      </div>
+      <div class="form-row">
+        <label>备注</label>
+        <textarea rows="2" placeholder="补充说明（可选）"></textarea>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeUploadModal()">取消</button>
+      <button class="btn btn-primary" onclick="closeUploadModal()">上传</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 学校状态卡片点击筛选
+  function filterStatus(el, status) {
+    document.querySelectorAll('.stage-card').forEach(function(c){ c.classList.remove('active'); });
+    el.classList.add('active');
+    // 原型示意，实际应按学校状态筛选下方学校列表
+  }
+
+  // 学校列表行点击 → 下钻到单校详情
+  function showSchoolDetail(schoolName) {
+    document.getElementById('overviewPage').style.display = 'none';
+    document.getElementById('detailPage').classList.add('active');
+    document.getElementById('schoolNameBread').textContent = schoolName;
+    document.getElementById('schoolNameTitle').textContent = schoolName;
+    // 原型示意，实际应根据schoolName加载对应数据
+  }
+
+  // 面包屑返回总览
+  function backToOverview() {
+    document.getElementById('detailPage').classList.remove('active');
+    document.getElementById('overviewPage').style.display = 'block';
+  }
+
+  // 模块卡片点击 → 跳转对应模块筛选列表
+  function jumpToModule(moduleName, schoolName) {
+    alert('跳转到：' + moduleName + ' 模块，筛选条件：学校=' + schoolName + '\n（原型示意，实际将跳转到对应模块页面并自动填充筛选条件）');
+  }
+
+  // 学校交付计划：折叠/展开子任务
+  function toggleRow(el) {
+    var parentRow = el.closest('tr');
+    var nextRow = parentRow.nextElementSibling;
+    var isCollapsed = el.textContent.includes('▶');
+
+    // 切换图标
+    el.textContent = isCollapsed ? '▼' : '▶';
+
+    // 切换所有紧邻的子行
+    while (nextRow && nextRow.classList.contains('child-row')) {
+      nextRow.style.display = isCollapsed ? '' : 'none';
+      nextRow = nextRow.nextElementSibling;
+    }
+  }
+
+  // 预览文件
+  function previewFile(fileName) {
+    alert('预览文件：' + fileName + '\n（原型示意，实际将打开文件预览弹窗或新标签页）');
+  }
+
+  // 新增任务弹窗
+  function openTaskModal() { document.getElementById('taskModal').classList.add('open'); }
+  function closeTaskModal() { document.getElementById('taskModal').classList.remove('open'); }
+
+  // 新增培训记录弹窗
+  function openTrainModal() {
+    document.getElementById('trainModalTitle').textContent = '新增培训记录';
+    document.getElementById('uploadedHint').style.display = 'none';
+    document.getElementById('trainModal').classList.add('open');
+  }
+  function closeTrainModal() { document.getElementById('trainModal').classList.remove('open'); }
+
+  // 编辑培训记录（复用同一弹窗，展示已上传材料可预览）
+  function openTrainEditModal(scope) {
+    document.getElementById('trainModalTitle').textContent = '编辑培训记录（' + scope + '）';
+    document.getElementById('trainScope').value = scope;
+    toggleOrgLabel();
+    document.getElementById('uploadedHint').style.display = 'block';
+    document.getElementById('trainModal').classList.add('open');
+  }
+
+  // 培训规格切换 → 组织单位标签联动
+  function toggleOrgLabel() {
+    var scope = document.getElementById('trainScope').value;
+    var label = document.getElementById('orgLabel');
+    var sel = document.getElementById('orgSelect');
+    if (scope === '区级') {
+      label.innerHTML = '培训组织机构<span class="req">*</span>';
+      sel.innerHTML = '<option>高新区教育局</option><option>高新区教研中心</option><option>其他机构</option>';
+    } else {
+      label.innerHTML = '培训组织学校<span class="req">*</span>';
+      sel.innerHTML = '<option>KDGX</option><option>168</option><option>CX</option><option>XZ</option>';
+    }
+  }
+
+  // 培训汇总卡片下钻
+  function drillTrain(dim) {
+    alert('下钻查看：' + dim + ' 明细\n（原型示意，实际弹出该维度的培训材料完成情况明细：按区级/校级分组的场次、人次、材料上传状态）');
+  }
+
+  // 导出培训明细
+  function exportTrain() {
+    alert('导出培训明细\n（原型示意，实际将导出全部培训记录为 Excel：培训规格/培训名称/培训类型/培训时间/组织学校机构/参与人次/材料上传状态）');
+  }
+
+  // 上传验收材料弹窗
+  function openUploadModal(typeName) {
+    document.getElementById('uploadTypeName').textContent = typeName;
+    document.getElementById('uploadTypeInput').value = typeName;
+    document.getElementById('uploadModal').classList.add('open');
+  }
+  function closeUploadModal() { document.getElementById('uploadModal').classList.remove('open'); }
+  // 文本过长悬浮显示完整内容（全局规范 §5.2A）
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.mini-tb td, .school-table td, .gantt td').forEach(function(el) {
+      var t = el.textContent.trim();
+      if (t) el.title = t;
+    });
+  });
+</script>
+</body>
+</html>

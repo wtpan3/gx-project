@@ -1,0 +1,957 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>报告管理原型 V2.0</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f2f5; color: rgba(0,0,0,.85); font-size: 14px; }
+.app { display: flex; height: 100vh; }
+.sider { width: 220px; background: #001529; color: #fff; position: sticky; top: 0; height: 100vh; }
+.logo { height: 64px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.1); }
+.menu { list-style: none; padding: 8px 0; }
+.menu li { padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.65); }
+.menu li.active { background: #1677ff; color: #fff; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.header { height: 56px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.title { font-size: 16px; font-weight: 500; }
+.content { flex: 1; overflow-y: auto; padding: 16px 24px; }
+.panel { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); margin-bottom: 16px; }
+.panel-hd { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; }
+.panel-bd { padding: 20px; }
+.tabs { display: flex; gap: 24px; border-bottom: 1px solid #f0f0f0; }
+.tab { padding: 12px 0; cursor: pointer; font-size: 14px; color: rgba(0,0,0,.65); border-bottom: 2px solid transparent; transition: all .2s; }
+.tab.active { color: #1677ff; border-bottom-color: #1677ff; font-weight: 500; }
+.tab:hover:not(.active) { color: #1677ff; }
+.filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.filters label { font-size: 13px; color: rgba(0,0,0,.65); }
+.filters select, .filters input { border: 1px solid #d9d9d9; border-radius: 6px; padding: 6px 10px; font-size: 13px; min-width: 140px; }
+.btn { font-size: 13px; padding: 6px 14px; border-radius: 6px; border: 1px solid #d9d9d9; background: #fff; cursor: pointer; transition: all .2s; }
+.btn:hover { border-color: #1677ff; color: #1677ff; }
+.btn-primary { background: #1677ff; color: #fff; border-color: #1677ff; }
+.btn-primary:hover { background: #4096ff; }
+.btn-link { border: none; background: transparent; color: #1677ff; padding: 4px 8px; }
+.btn-link:hover { text-decoration: underline; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+thead { background: #fafafa; }
+th { text-align: left; padding: 12px; font-weight: 500; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+td { padding: 12px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+tbody tr:hover { background: #fafafa; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
+.tag.weekly { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+.tag.monthly { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; }
+.tag.project { background: #e6fffb; color: #13c2c2; border: 1px solid #87e8de; }
+.tag.school { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+.tag.system { background: #f0f5ff; color: #2f54eb; border: 1px solid #adc6ff; }
+.tag.custom { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+.hidden { display: none; }
+.ai-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { background: #fff; border-radius: 8px; width: 90%; max-width: 900px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+.modal-hd { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+.modal-hd h3 { font-size: 16px; font-weight: 600; }
+.close-btn { font-size: 20px; cursor: pointer; color: rgba(0,0,0,.45); }
+.close-btn:hover { color: rgba(0,0,0,.85); }
+.modal-bd { padding: 24px; overflow-y: auto; flex: 1; }
+.modal-ft { padding: 12px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 8px; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: rgba(0,0,0,.85); margin-bottom: 6px; font-weight: 500; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px 12px; font-size: 13px; font-family: inherit; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1677ff; }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chapter-list { border: 1px solid #f0f0f0; border-radius: 6px; }
+.chapter-item { padding: 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+.chapter-item:last-child { border-bottom: none; }
+.chapter-item:hover { background: #fafafa; }
+.drag-handle { cursor: move; color: #999; margin-right: 8px; }
+.ai-fill-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.ai-fill-btn:hover { opacity: 0.9; }
+
+/* 项目报告格式样式 */
+.report-document { background: #fff; padding: 40px 60px; max-width: 900px; margin: 0 auto; font-family: "FangSong", "仿宋", serif; line-height: 2; font-size: 16pt; }
+.report-header { text-align: center; margin-bottom: 30px; }
+.report-header .project-name { font-size: 22pt; font-weight: bold; margin-bottom: 5px; }
+.report-header .doc-type { font-size: 22pt; font-weight: bold; margin: 10px 0; }
+.report-header .issue-number { font-size: 15pt; font-weight: bold; margin: 10px 0; }
+.report-header .date-range { font-size: 14pt; margin: 10px 0; }
+.report-header .company-name { font-size: 14pt; margin: 10px 0; }
+.report-summary { text-align: justify; text-indent: 2em; margin: 30px 0; }
+.report-content { text-align: justify; }
+.report-content h3 { font-family: "SimHei", "黑体", sans-serif; font-size: 16pt; font-weight: normal; margin: 20px 0 10px 0; text-indent: 0; }
+.report-content h4 { font-family: "KaiTi", "楷体", serif; font-size: 16pt; font-weight: normal; margin: 15px 0 10px 0; text-indent: 0; }
+.report-content p { margin: 10px 0; text-indent: 2em; }
+.report-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14pt; }
+.report-table th, .report-table td { border: 1px solid #000; padding: 8px; text-align: center; }
+.report-table th { background: #f0f0f0; font-weight: bold; }
+.report-table td { text-align: left; }
+.report-table td:first-child { text-align: center; }
+.report-section { margin-bottom: 24px; padding: 16px; border: 1px solid #f0f0f0; border-radius: 8px; }
+.report-section h4 { font-size: 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+.report-section .content { font-size: 13px; line-height: 1.8; color: rgba(0,0,0,.85); }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sider">
+    <div class="logo">AI+教育项目管理</div>
+    <ul class="menu">
+      <li>📊 项目概览</li>
+      <li>📅 项目计划</li>
+      <li>🚀 交付进展</li>
+      <li>💻 设备信息</li>
+      <li>⚠️ 风险管理</li>
+      <li class="active">📋 报告管理</li>
+      <li>📁 交付材料库</li>
+      <li>🔄 项目复盘</li>
+      <li>⚙️ 系统设置</li>
+    </ul>
+  </aside>
+  <main class="main">
+    <header class="header">
+      <div class="title">报告管理</div>
+      <div>王项目经理</div>
+    </header>
+    <div class="content">
+      <div class="panel">
+        <div class="panel-hd">
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab('reports')">报告列表</div>
+            <div class="tab" onclick="switchTab('templates')">模板管理</div>
+          </div>
+        </div>
+        <div class="panel-bd">
+          <!-- 报告列表视图 -->
+          <div id="reportsView">
+            <div class="filters">
+              <label>报告类型</label>
+              <select>
+                <option>全部</option>
+                <option>周报</option>
+                <option>月报</option>
+              </select>
+              <label>报告范围</label>
+              <select>
+                <option>全部</option>
+                <option>项目整体</option>
+                <option>高新一中</option>
+                <option>高新二中</option>
+              </select>
+              <label>创建人</label>
+              <select>
+                <option>全部</option>
+                <option>王项目经理</option>
+                <option>张主管</option>
+                <option>李工程师</option>
+              </select>
+              <label>时间范围</label>
+              <input type="date" style="min-width:140px;">
+              <span style="margin:0 4px;">至</span>
+              <input type="date" style="min-width:140px;">
+              <button class="btn btn-primary">查询</button>
+              <button class="btn">重置</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:16px;align-items:center;">
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="showNewReport()">+ 新建报告</button>
+                <button class="btn">导出选中</button>
+              </div>
+              <div style="color:#666;">共 8 条记录</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:3%;"><input type="checkbox"></th>
+                    <th style="width:25%;">报告标题</th>
+                    <th style="width:7%;">类型</th>
+                    <th style="width:9%;">范围</th>
+                    <th style="width:16%;">报告周期</th>
+                    <th style="width:11%;">编制时间</th>
+                    <th style="width:8%;">创建人</th>
+                    <th style="width:10%;">模板</th>
+                    <th style="width:11%;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="checkbox"></td>
+                    <td title="2026年7月第3周项目周报">2026年7月第3周项目周报 <span class="ai-badge">🤖 AI</span></td>
+                    <td><span class="tag weekly">周报</span></td>
+                    <td><span class="tag project">项目</span></td>
+                    <td>2026-07-15 至 2026-07-21</td>
+                    <td>2026-07-22 10:30</td>
+                    <td>王项目经理</td>
+                    <td title="项目周报模板">项目周报</td>
+                    <td>
+                      <button class="btn-link" onclick="showReportDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditReport()">编辑</button>
+                      <button class="btn-link">导出</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox"></td>
+                    <td title="高新一中7月交付月报">高新一中7月交付月报</td>
+                    <td><span class="tag monthly">月报</span></td>
+                    <td><span class="tag school">学校</span></td>
+                    <td>2026-07-01 至 2026-07-31</td>
+                    <td>2026-07-25 14:20</td>
+                    <td>张主管</td>
+                    <td title="校级月报模板">校级月报</td>
+                    <td>
+                      <button class="btn-link" onclick="showReportDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditReport()">编辑</button>
+                      <button class="btn-link">导出</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><input type="checkbox"></td>
+                    <td title="2026年7月第2周项目周报">2026年7月第2周项目周报</td>
+                    <td><span class="tag weekly">周报</span></td>
+                    <td><span class="tag project">项目</span></td>
+                    <td>2026-07-08 至 2026-07-14</td>
+                    <td>2026-07-15 09:15</td>
+                    <td>王项目经理</td>
+                    <td title="项目周报模板">项目周报</td>
+                    <td>
+                      <button class="btn-link" onclick="showReportDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditReport()">编辑</button>
+                      <button class="btn-link">导出</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- 模板管理视图 -->
+          <div id="templatesView" class="hidden">
+            <div style="display:flex;justify-content:space-between;margin-bottom:16px;align-items:center;">
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" onclick="showNewTemplate()">+ 新建模板</button>
+                <button class="btn" onclick="showImportTemplate()">📤 导入Word模板</button>
+              </div>
+              <div style="color:#666;">共 5 个模板</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:250px;">模板名称</th>
+                    <th style="width:100px;">适用类型</th>
+                    <th style="width:100px;">适用范围</th>
+                    <th style="width:80px;">章节数</th>
+                    <th style="width:100px;">模板来源</th>
+                    <th style="width:120px;">最后修改</th>
+                    <th style="width:80px;">默认模板</th>
+                    <th style="width:200px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td title="项目周报模板">项目周报模板 <span class="tag system">系统</span></td>
+                    <td><span class="tag weekly">周报</span></td>
+                    <td><span class="tag project">项目</span></td>
+                    <td>6</td>
+                    <td>系统预置</td>
+                    <td>2026-07-20</td>
+                    <td><input type="radio" name="defaultWeekly" checked></td>
+                    <td>
+                      <button class="btn-link" onclick="showTemplateDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditTemplate()">编辑</button>
+                      <button class="btn-link">复制</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td title="项目月报模板">项目月报模板 <span class="tag system">系统</span></td>
+                    <td><span class="tag monthly">月报</span></td>
+                    <td><span class="tag project">项目</span></td>
+                    <td>6</td>
+                    <td>系统预置</td>
+                    <td>2026-07-20</td>
+                    <td><input type="radio" name="defaultMonthly" checked></td>
+                    <td>
+                      <button class="btn-link" onclick="showTemplateDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditTemplate()">编辑</button>
+                      <button class="btn-link">复制</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td title="校级周报模板">校级周报模板 <span class="tag system">系统</span></td>
+                    <td><span class="tag weekly">周报</span></td>
+                    <td><span class="tag school">学校</span></td>
+                    <td>6</td>
+                    <td>系统预置</td>
+                    <td>2026-07-20</td>
+                    <td><input type="radio" name="defaultSchoolWeekly" checked></td>
+                    <td>
+                      <button class="btn-link" onclick="showTemplateDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditTemplate()">编辑</button>
+                      <button class="btn-link">复制</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td title="校级月报模板">校级月报模板 <span class="tag system">系统</span></td>
+                    <td><span class="tag monthly">月报</span></td>
+                    <td><span class="tag school">学校</span></td>
+                    <td>6</td>
+                    <td>系统预置</td>
+                    <td>2026-07-20</td>
+                    <td><input type="radio" name="defaultSchoolMonthly" checked></td>
+                    <td>
+                      <button class="btn-link" onclick="showTemplateDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditTemplate()">编辑</button>
+                      <button class="btn-link">复制</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td title="甲方汇报专用模板">甲方汇报专用模板 <span class="tag custom">自定义</span></td>
+                    <td><span class="tag monthly">月报</span></td>
+                    <td><span class="tag project">项目</span></td>
+                    <td>8</td>
+                    <td>Word导入</td>
+                    <td>2026-07-23</td>
+                    <td><input type="radio" name="defaultCustom"></td>
+                    <td>
+                      <button class="btn-link" onclick="showTemplateDetail()">查看</button>
+                      <button class="btn-link" onclick="showEditTemplate()">编辑</button>
+                      <button class="btn-link">复制</button>
+                      <button class="btn-link" style="color:#ff4d4f;">删除</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 新建报告弹窗 -->
+<div id="newReportModal" class="modal">
+  <div class="modal-content" style="max-width:600px;">
+    <div class="modal-hd">
+      <h3>新建报告</h3>
+      <span class="close-btn" onclick="closeModal('newReportModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="form-group">
+        <label>选择模板 <span style="color:#ff4d4f;">*</span></label>
+        <select>
+          <option>项目周报模板</option>
+          <option>项目月报模板</option>
+          <option>校级周报模板</option>
+          <option>校级月报模板</option>
+          <option>甲方汇报专用模板</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>报告类型 <span style="color:#ff4d4f;">*</span></label>
+          <select>
+            <option>周报</option>
+            <option>月报</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>报告范围 <span style="color:#ff4d4f;">*</span></label>
+          <select>
+            <option>项目整体</option>
+            <option>高新一中</option>
+            <option>高新二中</option>
+            <option>高新三中</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>报告周期 <span style="color:#ff4d4f;">*</span></label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="date" style="flex:1;">
+          <span>至</span>
+          <input type="date" style="flex:1;">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>报告标题 <span style="color:#ff4d4f;">*</span></label>
+        <input type="text" value="2026年7月第3周项目周报" placeholder="系统自动生成，可修改">
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" checked>
+          <span class="ai-badge">🤖 启用AI智能填充</span>
+        </label>
+        <div style="font-size:12px;color:#999;margin-top:4px;margin-left:24px;">
+          AI将自动提取数据并生成工作总结、问题分析、趋势预测等内容
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('newReportModal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('newReportModal');showEditReport();">生成报告</button>
+    </div>
+  </div>
+</div>
+<!-- 报告详情/编辑弹窗 - 政府公文格式 -->
+<div id="reportDetailModal" class="modal">
+  <div class="modal-content" style="max-width:1000px;">
+    <div class="modal-hd">
+      <h3>2026年7月第3周项目周报 <span class="ai-badge">🤖 AI</span></h3>
+      <span class="close-btn" onclick="closeModal('reportDetailModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="report-document">
+        <div class="report-header">
+          <div class="project-name">GX教育项目</div>
+          <div class="doc-type">工作简报</div>
+          <div class="issue-number">第3期</div>
+          <div class="date-range">（2026年7月15日 － 2026年7月21日）</div>
+          <div class="company-name">某某科技有限公司</div>
+        </div>
+
+        <div class="report-summary">
+          本周重点工作情况，一是完成高新一中、高新二中共计287台设备的到货验收；二是数智工作台完成基础功能开发并进入内测；三是完成高新一中教师培训第一期48人参训；四是持续推进软件平台部署和测试；五是常态化跟踪各学校使用过程中的问题并闭环。
+        </div>
+
+        <div class="report-content">
+          <div class="report-section">
+            <h3>一、本周重点工作</h3>
+            <button class="ai-fill-btn" onclick="showAIFill()">🤖 AI重新填充</button>
+            <h4>（一）设备交付进展</h4>
+            <div class="content" contenteditable="true">
+              <p>本周完成高新一中、高新二中共计287台设备的到货验收，验收合格率100%。各学校设备交付情况如下：</p>
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th style="width:5%;">序号</th>
+                    <th style="width:20%;">学校名称</th>
+                    <th style="width:12%;">设备总数</th>
+                    <th style="width:12%;">已到货</th>
+                    <th style="width:12%;">已安装</th>
+                    <th style="width:12%;">已调试</th>
+                    <th style="width:12%;">运行中</th>
+                    <th style="width:15%;">当前状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>高新一中</td>
+                    <td>120</td>
+                    <td>120</td>
+                    <td>120</td>
+                    <td>120</td>
+                    <td>120</td>
+                    <td>运行中</td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>高新二中</td>
+                    <td>85</td>
+                    <td>85</td>
+                    <td>60</td>
+                    <td>45</td>
+                    <td>0</td>
+                    <td>安装调试中</td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>高新三中</td>
+                    <td>82</td>
+                    <td>82</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>0</td>
+                    <td>待安装</td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" style="text-align:center;"><strong>合计</strong></td>
+                    <td><strong>287</strong></td>
+                    <td><strong>287</strong></td>
+                    <td><strong>180</strong></td>
+                    <td><strong>165</strong></td>
+                    <td><strong>120</strong></td>
+                    <td>-</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="text-align:center;margin-top:20px;">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjMwMCIgeT0iMzAiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSJib2xkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7or77lpIfkuqTku5jov5vluqblm748L3RleHQ+PHJlY3QgeD0iODAiIHk9IjgwIiB3aWR0aD0iNjAiIGhlaWdodD0iMTgwIiBmaWxsPSIjNDI5NmZmIi8+PHJlY3QgeD0iMTgwIiB5PSI4MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjE4MCIgZmlsbD0iIzUyYzQxYSIvPjxyZWN0IHg9IjI4MCIgeT0iMTIwIiB3aWR0aD0iNjAiIGhlaWdodD0iMTQwIiBmaWxsPSIjZmZjMDY5Ii8+PHJlY3QgeD0iMzgwIiB5PSIxNDAiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMjAiIGZpbGw9IiNmZjg1YzAiLz48cmVjdCB4PSI0ODAiIHk9IjE4MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjYTY4YWZmIi8+PHRleHQgeD0iMTEwIiB5PSI3NSIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Mjg3PC90ZXh0Pjx0ZXh0IHg9IjIxMCIgeT0iNzUiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjI4NzwvdGV4dD48dGV4dCB4PSIzMTAiIHk9IjExNSIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+MTgwPC90ZXh0Pjx0ZXh0IHg9IjQxMCIgeT0iMTM1IiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4xNjU8L3RleHQ+PHRleHQgeD0iNTEwIiB5PSIxNzUiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjEyMDwvdGV4dD48dGV4dCB4PSIxMTAiIHk9IjI4MCIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5bey5Yiw6LSnPC90ZXh0Pjx0ZXh0IHg9IjIxMCIgeT0iMjgwIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lt7Llronoo4U8L3RleHQ+PHRleHQgeD0iMzEwIiB5PSIyODAiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuW3suiwgOivlTwvdGV4dD48dGV4dCB4PSI0MTAiIHk9IjI4MCIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+6L+Q6KGM5LitPC90ZXh0Pjx0ZXh0IHg9IjUxMCIgeT0iMjgwIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lt7LlrozmiJA8L3RleHQ+PC9zdmc+" alt="设备交付进度图" style="max-width:100%;border:1px solid #ddd;">
+              </p>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h4>（二）培训工作进展</h4>
+            <div class="content" contenteditable="true">
+              <p>本周完成高新一中教师培训第一期，共48人参训，培训满意度92%。各学校培训情况如下：</p>
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th style="width:5%;">序号</th>
+                    <th style="width:25%;">学校名称</th>
+                    <th style="width:15%;">培训批次</th>
+                    <th style="width:15%;">参训人数</th>
+                    <th style="width:15%;">培训时长</th>
+                    <th style="width:15%;">满意度</th>
+                    <th style="width:10%;">状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>高新一中</td>
+                    <td>第1期</td>
+                    <td>48人</td>
+                    <td>8小时</td>
+                    <td>92%</td>
+                    <td>已完成</td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>高新二中</td>
+                    <td>待安排</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>计划中</td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>高新三中</td>
+                    <td>待安排</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>计划中</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h3>二、交付进度汇总</h3>
+            <button class="ai-fill-btn" onclick="showAIFill()">🤖 AI重新填充</button>
+            <div class="content" contenteditable="true">
+              <p>截至本周，项目整体交付进度如下：</p>
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th style="width:5%;">序号</th>
+                    <th style="width:20%;">学校名称</th>
+                    <th style="width:12%;">项目状态</th>
+                    <th style="width:15%;">硬件进度</th>
+                    <th style="width:15%;">软件进度</th>
+                    <th style="width:15%;">培训进度</th>
+                    <th style="width:18%;">预计完成时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>高新一中</td>
+                    <td>运行中</td>
+                    <td>100%</td>
+                    <td>100%</td>
+                    <td>100%</td>
+                    <td>已完成</td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>高新二中</td>
+                    <td>调试中</td>
+                    <td>70%</td>
+                    <td>85%</td>
+                    <td>0%</td>
+                    <td>2026-08-05</td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>高新三中</td>
+                    <td>安装中</td>
+                    <td>45%</td>
+                    <td>60%</td>
+                    <td>0%</td>
+                    <td>2026-08-15</td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>高新四中</td>
+                    <td>装修中</td>
+                    <td>0%</td>
+                    <td>0%</td>
+                    <td>0%</td>
+                    <td>2026-09-01</td>
+                  </tr>
+                  <tr>
+                    <td>5</td>
+                    <td>高新五中</td>
+                    <td>待启动</td>
+                    <td>0%</td>
+                    <td>0%</td>
+                    <td>0%</td>
+                    <td>2026-09-10</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style="text-align:center;margin-top:20px;">
+                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNTAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2ZmZiIvPjx0ZXh0IHg9IjI1MCIgeT0iMzAiIGZvbnQtc2l6ZT0iMTYiIGZvbnQtd2VpZ2h0PSJib2xkIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lrabnmoTnirbmgIHliIbluoPnpLo8L3RleHQ+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMTYwIiByPSI4MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZGRkIiBzdHJva2Utd2lkdGg9IjIiLz48cGF0aCBkPSJNIDIwMCwxNjAgTCAyMDAsMTYwIEEgODAsODAgMCAwLDEgMjQ4LDIyNSBMIDIwMCwxNjAgWiIgZmlsbD0iIzUyYzQxYSIvPjx0ZXh0IHg9IjIzMCIgeT0iMjA1IiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7lt7LlrozkuJo8L3RleHQ+PHRleHQgeD0iMjMwIiB5PSIyMjAiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjEw54m5PC90ZXh0PjxwYXRoIGQ9Ik0gMjAwLDE2MCBMIDI0OCwyMjUgQSA4MCw4MCAwIDAsMSAxNTIsMjI1IEwgMjAwLDE2MCBaIiBmaWxsPSIjZmZjMDY5Ii8+PHRleHQgeD0iMTcwIiB5PSIyMDUiIGZvbnQtc2l6ZT0iMTIiIHRleHQtYW5jaG9yPSJtaWRkbGUiPuWfueixremXrjwvdGV4dD48dGV4dCB4PSIxNzAiIHk9IjIyMCIgZm9udC1zaXplPSIxMSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Mue0oTwvdGV4dD48cGF0aCBkPSJNIDIwMCwxNjAgTCAxNTIsMjI1IEEgODAsODAgMCAwLDEgMTM1LDE3MyBMIDIwMCwxNjAgWiIgZmlsbD0iI2E2OGFmZiIvPjx0ZXh0IHg9IjE0MCIgeT0iMTgwIiBmb250LXNpemU9IjEyIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj7or43or5XkuK08L3RleHQ+PHRleHQgeD0iMTQwIiB5PSIxOTUiIGZvbnQtc2l6ZT0iMTEiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjLmiYA8L3RleHQ+PHBhdGggZD0iTSAyMDAsMTYwIEwgMTM1LDE3MyBBIDgwLDgwIDAgMCwxIDE0MSwxMDYgTCAyMDAsMTYwIFoiIGZpbGw9IiNmZjg1YzAiLz48dGV4dCB4PSIxNTAiIHk9IjEzMCIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+5a6J6KOF5LitPC90ZXh0Pjx0ZXh0IHg9IjE1MCIgeT0iMTQ1IiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4z5omAPC90ZXh0PjxwYXRoIGQ9Ik0gMjAwLDE2MCBMIDE0MSwxMDYgQSA4MCw4MCAwIDAsMSAyMDAsODAgTCAyMDAsMTYwIFoiIGZpbGw9IiM0Mjk2ZmYiLz48dGV4dCB4PSIxODAiIHk9IjEwNSIgZm9udC1zaXplPSIxMiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+6L+Q6KGM5LitPC90ZXh0Pjx0ZXh0IHg9IjE4MCIgeT0iMTIwIiBmb250LXNpemU9IjExIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4x5omAPC90ZXh0Pjwvc3ZnPg==" alt="学校状态分布图" style="max-width:100%;border:1px solid #ddd;">
+              </p>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h3>三、风险与问题跟踪</h3>
+            <button class="ai-fill-btn" onclick="showAIFill()">🤖 AI重新填充</button>
+            <div class="content" contenteditable="true">
+              <p>本周风险与问题汇总如下：</p>
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th style="width:5%;">序号</th>
+                    <th style="width:15%;">学校名称</th>
+                    <th style="width:10%;">风险等级</th>
+                    <th style="width:30%;">问题描述</th>
+                    <th style="width:20%;">应对方案</th>
+                    <th style="width:10%;">负责人</th>
+                    <th style="width:10%;">状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>高新一中</td>
+                    <td>高</td>
+                    <td>机房改造延期，可能影响整体进度15天</td>
+                    <td>协调施工方加班，调整后续任务</td>
+                    <td>张工</td>
+                    <td>处理中</td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>高新二中</td>
+                    <td>中</td>
+                    <td>网络带宽不足，影响设备联网</td>
+                    <td>协调运营商升级带宽</td>
+                    <td>李工</td>
+                    <td>已解决</td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>全局</td>
+                    <td>高</td>
+                    <td>培训师资力量不足</td>
+                    <td>增加外协培训师2名</td>
+                    <td>王经理</td>
+                    <td>待处理</td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>高新三中</td>
+                    <td>中</td>
+                    <td>设备安装人员排期紧张</td>
+                    <td>增加外协安装人员3名</td>
+                    <td>张工</td>
+                    <td>处理中</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h3>四、下周工作计划</h3>
+            <button class="ai-fill-btn" onclick="showAIFill()">🤖 AI重新填充</button>
+            <div class="content" contenteditable="true">
+              <h4>（一）完成高新二中设备安装，启动高新三中设备到货验收</h4>
+              <h4>（二）推进数智工作台测试，完成教育数据指挥中心交付</h4>
+              <h4>（三）启动高新二中教师培训第一期</h4>
+              <h4>（四）协调解决高新一中机房改造延期问题</h4>
+            </div>
+          </div>
+
+          <div class="report-section">
+            <h3>五、待协调/确认事项</h3>
+            <button class="ai-fill-btn" onclick="showAIFill()">🤖 AI重新填充</button>
+            <div class="content" contenteditable="true">
+              <p>1. 高新一中机房改造延期，需协调相关部门加快进度</p>
+              <p>2. 培训师资力量不足，需增加外协培训师</p>
+              <p>3. 部分软件功能需求变更，需重新评估工期影响</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('reportDetailModal')">取消</button>
+      <button class="btn">导出Word</button>
+      <button class="btn btn-primary" onclick="closeModal('reportDetailModal')">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 模板编辑弹窗 -->
+<div id="templateEditModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-hd">
+      <h3>编辑模板 - 项目周报模板</h3>
+      <span class="close-btn" onclick="closeModal('templateEditModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="form-group">
+        <label>模板名称 <span style="color:#ff4d4f;">*</span></label>
+        <input type="text" value="项目周报模板">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>适用类型 <span style="color:#ff4d4f;">*</span></label>
+          <select>
+            <option selected>周报</option>
+            <option>月报</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>适用范围 <span style="color:#ff4d4f;">*</span></label>
+          <select>
+            <option selected>项目整体</option>
+            <option>学校</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>章节结构 <span style="color:#ff4d4f;">*</span></label>
+        <div class="chapter-list">
+          <div class="chapter-item">
+            <div style="display:flex;align-items:center;flex:1;">
+              <span class="drag-handle">⋮⋮</span>
+              <span>一、本周工作进展</span>
+            </div>
+            <div>
+              <select style="font-size:12px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;margin-right:8px;">
+                <option selected>自动提取+AI填充</option>
+                <option>仅自动提取</option>
+                <option>手动填写</option>
+              </select>
+              <button class="btn-link">编辑</button>
+              <button class="btn-link" style="color:#ff4d4f;">删除</button>
+            </div>
+          </div>
+          <div class="chapter-item">
+            <div style="display:flex;align-items:center;flex:1;">
+              <span class="drag-handle">⋮⋮</span>
+              <span>二、交付进度汇总</span>
+            </div>
+            <div>
+              <select style="font-size:12px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;margin-right:8px;">
+                <option selected>自动提取+AI填充</option>
+                <option>仅自动提取</option>
+                <option>手动填写</option>
+              </select>
+              <button class="btn-link">编辑</button>
+              <button class="btn-link" style="color:#ff4d4f;">删除</button>
+            </div>
+          </div>
+          <div class="chapter-item">
+            <div style="display:flex;align-items:center;flex:1;">
+              <span class="drag-handle">⋮⋮</span>
+              <span>三、设备概况汇总</span>
+            </div>
+            <div>
+              <select style="font-size:12px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;margin-right:8px;">
+                <option>自动提取+AI填充</option>
+                <option selected>仅自动提取</option>
+                <option>手动填写</option>
+              </select>
+              <button class="btn-link">编辑</button>
+              <button class="btn-link" style="color:#ff4d4f;">删除</button>
+            </div>
+          </div>
+          <div class="chapter-item">
+            <div style="display:flex;align-items:center;flex:1;">
+              <span class="drag-handle">⋮⋮</span>
+              <span>四、风险项汇总</span>
+            </div>
+            <div>
+              <select style="font-size:12px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;margin-right:8px;">
+                <option>自动提取+AI填充</option>
+                <option selected>仅自动提取</option>
+                <option>手动填写</option>
+              </select>
+              <button class="btn-link">编辑</button>
+              <button class="btn-link" style="color:#ff4d4f;">删除</button>
+            </div>
+          </div>
+          <div class="chapter-item">
+            <div style="display:flex;align-items:center;flex:1;">
+              <span class="drag-handle">⋮⋮</span>
+              <span>五、问题汇总</span>
+            </div>
+            <div>
+              <select style="font-size:12px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;margin-right:8px;">
+                <option selected>自动提取+AI填充</option>
+                <option>仅自动提取</option>
+                <option>手动填写</option>
+              </select>
+              <button class="btn-link">编辑</button>
+              <button class="btn-link" style="color:#ff4d4f;">删除</button>
+            </div>
+          </div>
+          <div class="chapter-item">
+            <div style="display:flex;align-items:center;flex:1;">
+              <span class="drag-handle">⋮⋮</span>
+              <span>六、下周工作计划</span>
+            </div>
+            <div>
+              <select style="font-size:12px;padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;margin-right:8px;">
+                <option selected>自动提取+AI填充</option>
+                <option>仅自动提取</option>
+                <option>手动填写</option>
+              </select>
+              <button class="btn-link">编辑</button>
+              <button class="btn-link" style="color:#ff4d4f;">删除</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn" style="margin-top:8px;width:100%;">+ 添加章节</button>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('templateEditModal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('templateEditModal')">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导入模板弹窗 -->
+<div id="importTemplateModal" class="modal">
+  <div class="modal-content" style="max-width:600px;">
+    <div class="modal-hd">
+      <h3>导入Word模板</h3>
+      <span class="close-btn" onclick="closeModal('importTemplateModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="form-group">
+        <label>上传Word文档 <span style="color:#ff4d4f;">*</span></label>
+        <div style="border:2px dashed #d9d9d9;border-radius:8px;padding:40px;text-align:center;cursor:pointer;" onclick="document.getElementById('fileInput').click()">
+          <div style="font-size:48px;margin-bottom:12px;">📄</div>
+          <div style="color:#1677ff;margin-bottom:4px;">点击上传或拖拽文件到此处</div>
+          <div style="font-size:12px;color:#999;">支持 .docx 格式，最大 10MB</div>
+          <input type="file" id="fileInput" accept=".docx" style="display:none;">
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:12px;background:#e6f4ff;border-left:3px solid #1677ff;border-radius:4px;font-size:12px;">
+        <strong>🤖 AI识别说明：</strong><br>
+        上传后，AI将自动识别文档中的章节结构、标题层级和变量占位符（如{项目名称}、{报告周期}），您可以在下一步调整识别结果。
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('importTemplateModal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('importTemplateModal')">开始识别</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI填充预览弹窗 -->
+<div id="aiFillModal" class="modal">
+  <div class="modal-content" style="max-width:700px;">
+    <div class="modal-hd">
+      <h3>🤖 AI智能填充预览</h3>
+      <span class="close-btn" onclick="closeModal('aiFillModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div style="margin-bottom:16px;padding:12px;background:#f6f8fa;border-radius:6px;font-size:13px;">
+        <strong>数据来源：</strong>项目计划模块（12条任务）、设备信息模块（287台设备）、风险管理模块（16项风险）
+      </div>
+      <div class="form-group">
+        <label>AI生成内容</label>
+        <div style="border:1px solid #d9d9d9;border-radius:6px;padding:16px;background:#fff;max-height:400px;overflow-y:auto;">
+          <p><strong>（一）设备交付进展</strong></p>
+          <p>本周完成高新一中、高新二中共计287台设备的到货验收，验收合格率100%。其中高新一中已完成设备安装调试，进入试运行阶段；高新二中预计下周完成安装。</p>
+          <p><strong>（二）软件平台部署</strong></p>
+          <p>数智工作台已完成基础功能开发，正在进行内测；教育数据指挥中心完成数据对接，预计本周五交付测试环境。智能应用创编平台开发进度60%，按计划推进。</p>
+          <p><strong>（三）培训工作</strong></p>
+          <p>完成高新一中教师培训第一期，共48人参训，培训满意度92%。培训内容涵盖设备使用、软件操作、教学场景应用三大模块。</p>
+          <p><strong>（四）风险管控</strong></p>
+          <p>本周新增高风险项2项，已启动应对措施。高新一中机房改造延期问题正在协调，预计影响可控制在1周内。</p>
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#999;">
+        提示：您可以直接采纳此内容，或点击"重新生成"让AI换一种表述方式
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('aiFillModal')">关闭</button>
+      <button class="btn">🔄 重新生成</button>
+      <button class="btn btn-primary" onclick="closeModal('aiFillModal')">✓ 采纳此内容</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  const tabs = document.querySelectorAll('.tab');
+  const views = {
+    reports: document.getElementById('reportsView'),
+    templates: document.getElementById('templatesView')
+  };
+  
+  tabs.forEach(t => t.classList.remove('active'));
+  Object.values(views).forEach(v => v.classList.add('hidden'));
+  
+  if (tab === 'reports') {
+    tabs[0].classList.add('active');
+    views.reports.classList.remove('hidden');
+  } else if (tab === 'templates') {
+    tabs[1].classList.add('active');
+    views.templates.classList.remove('hidden');
+  }
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('show');
+}
+
+function showNewReport() {
+  document.getElementById('newReportModal').classList.add('show');
+}
+
+function showReportDetail() {
+  document.getElementById('reportDetailModal').classList.add('show');
+}
+
+function showEditReport() {
+  document.getElementById('reportDetailModal').classList.add('show');
+}
+
+function showTemplateDetail() {
+  document.getElementById('templateEditModal').classList.add('show');
+}
+
+function showEditTemplate() {
+  document.getElementById('templateEditModal').classList.add('show');
+}
+
+function showNewTemplate() {
+  document.getElementById('templateEditModal').classList.add('show');
+}
+
+function showImportTemplate() {
+  document.getElementById('importTemplateModal').classList.add('show');
+}
+
+function showAIFill() {
+  document.getElementById('aiFillModal').classList.add('show');
+}
+
+window.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal')) {
+    e.target.classList.remove('show');
+  }
+});
+</script>
+</body>
+</html>
+

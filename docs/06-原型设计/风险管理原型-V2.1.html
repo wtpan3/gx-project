@@ -1,0 +1,479 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>风险管理原型 V2.1</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f0f2f5; color: rgba(0,0,0,.85); font-size: 14px; }
+.app { display: flex; height: 100vh; }
+.sider { width: 220px; background: #001529; color: #fff; position: sticky; top: 0; height: 100vh; }
+.logo { height: 64px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.1); }
+.menu { list-style: none; padding: 8px 0; }
+.menu li { padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.65); }
+.menu li.active { background: #1677ff; color: #fff; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.header { height: 56px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+.title { font-size: 16px; font-weight: 500; }
+.content { flex: 1; overflow-y: auto; padding: 16px 24px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.stat-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.stat-card .label { font-size: 13px; color: rgba(0,0,0,.65); margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 600; }
+.stat-card.high .value { color: #ff4d4f; }
+.stat-card.medium .value { color: #faad14; }
+.stat-card.low .value { color: #52c41a; }
+.stat-card.pending .value { color: #1677ff; }
+.panel { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.panel-hd { padding: 16px 20px; border-bottom: 1px solid #f0f0f0; font-size: 16px; font-weight: 600; }
+.panel-bd { padding: 20px; }
+.filters { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.filters label { font-size: 13px; color: rgba(0,0,0,.65); }
+.filters select, .filters input { border: 1px solid #d9d9d9; border-radius: 6px; padding: 6px 10px; font-size: 13px; min-width: 140px; }
+.btn { font-size: 13px; padding: 6px 14px; border-radius: 6px; border: 1px solid #d9d9d9; background: #fff; cursor: pointer; transition: all .2s; }
+.btn:hover { border-color: #1677ff; color: #1677ff; }
+.btn-primary { background: #1677ff; color: #fff; border-color: #1677ff; }
+.btn-primary:hover { background: #4096ff; }
+.btn-link { border: none; background: transparent; color: #1677ff; padding: 4px 8px; }
+.btn-link:hover { text-decoration: underline; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+thead { background: #fafafa; }
+th { text-align: left; padding: 12px; font-weight: 500; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+td { padding: 12px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+tbody tr:hover { background: #fafafa; }
+td[title] { cursor: help; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
+.tag.high { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+.tag.medium { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+.tag.low { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+.tag.pending { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
+.tag.processing { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+.tag.closed { background: #f5f5f5; color: rgba(0,0,0,.45); border: 1px solid #d9d9d9; }
+.editable { cursor: text; position: relative; }
+.editable:hover { background: #e6f4ff; }
+.editable input, .editable textarea { width: 100%; border: 1px solid #1677ff; border-radius: 4px; padding: 4px 8px; font-size: 13px; font-family: inherit; }
+.editable textarea { resize: none; min-height: 60px; }
+.tag.clickable { cursor: pointer; }
+.tag.clickable:hover { opacity: 0.8; }
+.status-dropdown { position: absolute; background: #fff; border: 1px solid #d9d9d9; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,.15); z-index: 100; margin-top: 4px; }
+.status-dropdown div { padding: 8px 12px; cursor: pointer; font-size: 13px; }
+.status-dropdown div:hover { background: #f5f5f5; }
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+.modal.show { display: flex; }
+.modal-content { background: #fff; border-radius: 8px; width: 90%; max-width: 700px; max-height: 85vh; overflow: hidden; display: flex; flex-direction: column; }
+.modal-hd { padding: 16px 24px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; }
+.modal-hd h3 { font-size: 16px; font-weight: 600; }
+.close-btn { font-size: 20px; cursor: pointer; color: rgba(0,0,0,.45); }
+.close-btn:hover { color: rgba(0,0,0,.85); }
+.modal-bd { padding: 24px; overflow-y: auto; flex: 1; }
+.modal-ft { padding: 12px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 8px; }
+.detail-row { margin-bottom: 16px; }
+.detail-row .label { font-size: 13px; color: rgba(0,0,0,.65); margin-bottom: 6px; font-weight: 500; }
+.detail-row .value { font-size: 13px; color: rgba(0,0,0,.85); line-height: 1.6; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: rgba(0,0,0,.85); margin-bottom: 6px; font-weight: 500; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px 12px; font-size: 13px; font-family: inherit; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #1677ff; }
+.form-group textarea { resize: vertical; min-height: 80px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sider">
+    <div class="logo">AI+教育项目管理</div>
+    <ul class="menu">
+      <li>📊 项目概览</li>
+      <li>📅 项目计划</li>
+      <li>🚀 交付进展</li>
+      <li>💻 设备信息</li>
+      <li class="active">⚠️ 风险管理</li>
+      <li>📋 报告管理</li>
+      <li>📁 交付材料库</li>
+      <li>🔄 项目复盘</li>
+    </ul>
+  </aside>
+  <main class="main">
+    <header class="header">
+      <div class="title">风险管理</div>
+      <div>王项目经理</div>
+    </header>
+    <div class="content">
+      <div class="stats">
+        <div class="stat-card high">
+          <div class="label">高风险</div>
+          <div class="value">5</div>
+        </div>
+        <div class="stat-card medium">
+          <div class="label">中风险</div>
+          <div class="value">8</div>
+        </div>
+        <div class="stat-card low">
+          <div class="label">低风险</div>
+          <div class="value">3</div>
+        </div>
+        <div class="stat-card pending">
+          <div class="label">待处理</div>
+          <div class="value">6</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hd">风险列表</div>
+        <div class="panel-bd">
+          <div class="filters">
+            <label>风险等级</label>
+            <select><option>全部</option><option>高</option><option>中</option><option>低</option></select>
+            <label>状态</label>
+            <select><option>全部</option><option>待处理</option><option>处理中</option><option>已关闭</option></select>
+            <label>责任人</label>
+            <select><option>全部</option><option>张工</option><option>李经理</option></select>
+            <label>关键词</label>
+            <input type="text" placeholder="搜索风险描述" style="min-width:200px;">
+            <button class="btn btn-primary">查询</button>
+            <button class="btn">重置</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:16px;align-items:center;">
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-primary">+ 新增风险</button>
+              <button class="btn">导入</button>
+              <button class="btn">导出</button>
+            </div>
+            <div style="color:#666;">共 16 条记录</div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:40px;"><input type="checkbox"></th>
+                  <th style="width:70px;">风险等级</th>
+                  <th style="width:180px;">风险描述</th>
+                  <th style="width:90px;">影响范围</th>
+                  <th style="width:200px;">应对方案</th>
+                  <th style="width:200px;">目前进展情况</th>
+                  <th style="width:70px;">责任人</th>
+                  <th style="width:100px;">计划关闭时间</th>
+                  <th style="width:80px;">目前状态</th>
+                  <th style="width:160px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><span class="tag high">高</span></td>
+                  <td class="editable" ondblclick="editCell(this)" title="高新一中机房改造延期，可能影响设备安装进度，导致整体项目延期15天">高新一中机房改造延期，可能影响设备安装进度...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="进度/质量">进度/质量</td>
+                  <td class="editable" ondblclick="editCell(this)" title="协调学校加快机房改造进度；同步调整设备安装计划；申请工期顺延">协调学校加快机房改造进度；同步调整...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="已与校方沟通，机房改造预计本周五完成，设备安装计划已调整至下周一">已与校方沟通，机房改造预计本周五完成...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="张工">张工</td>
+                  <td title="2026-07-30">2026-07-30</td>
+                  <td><span class="tag processing clickable" onclick="toggleStatus(this)">处理中</span></td>
+                  <td>
+                    <button class="btn-link" onclick="showDetail()">详情</button>
+                    <button class="btn-link" onclick="showEdit()">编辑</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><span class="tag medium">中</span></td>
+                  <td class="editable" ondblclick="editCell(this)" title="部分供应商响应缓慢，采购周期可能延长5-7天">部分供应商响应缓慢，采购周期可能延长...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="进度">进度</td>
+                  <td class="editable" ondblclick="editCell(this)" title="启用备选供应商；提前下单关键物料；加强采购跟进频率">启用备选供应商；提前下单关键物料...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="已联系2家备选供应商，关键物料已提前采购，预计影响可控制在3天内">已联系2家备选供应商，关键物料已提前...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="李经理">李经理</td>
+                  <td title="2026-08-05">2026-08-05</td>
+                  <td><span class="tag processing clickable" onclick="toggleStatus(this)">处理中</span></td>
+                  <td>
+                    <button class="btn-link" onclick="showDetail()">详情</button>
+                    <button class="btn-link" onclick="showEdit()">编辑</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><span class="tag high">高</span></td>
+                  <td class="editable" ondblclick="editCell(this)" title="培训师资力量不足，可能导致培训效果不达标，影响验收">培训师资力量不足，可能导致培训效果不...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="质量/验收">质量/验收</td>
+                  <td class="editable" ondblclick="editCell(this)" title="外聘专业培训讲师；制作详细培训教材；增加培训场次">外聘专业培训讲师；制作详细培训教材...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="尚未启动应对措施，等待预算审批">尚未启动应对措施，等待预算审批</td>
+                  <td class="editable" ondblclick="editCell(this)" title="王主管">王主管</td>
+                  <td title="2026-08-10">2026-08-10</td>
+                  <td><span class="tag pending clickable" onclick="toggleStatus(this)">待处理</span></td>
+                  <td>
+                    <button class="btn-link" onclick="showDetail()">详情</button>
+                    <button class="btn-link" onclick="showEdit()">编辑</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><span class="tag low">低</span></td>
+                  <td class="editable" ondblclick="editCell(this)" title="网络带宽偶尔不足，部分功能演示可能卡顿">网络带宽偶尔不足，部分功能演示可能卡顿</td>
+                  <td class="editable" ondblclick="editCell(this)" title="质量">质量</td>
+                  <td class="editable" ondblclick="editCell(this)" title="协调学校升级网络带宽；准备离线演示版本">协调学校升级网络带宽；准备离线演示...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="学校已完成网络升级，问题已解决">学校已完成网络升级，问题已解决</td>
+                  <td class="editable" ondblclick="editCell(this)" title="张工">张工</td>
+                  <td title="2026-07-22">2026-07-22</td>
+                  <td><span class="tag closed clickable" onclick="toggleStatus(this)">已关闭</span></td>
+                  <td>
+                    <button class="btn-link" onclick="showDetail()">详情</button>
+                    <button class="btn-link" onclick="showEdit()">编辑</button>
+                  </td>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td><span class="tag medium">中</span></td>
+                  <td class="editable" ondblclick="editCell(this)" title="验收标准理解存在偏差，可能需要返工">验收标准理解存在偏差，可能需要返工</td>
+                  <td class="editable" ondblclick="editCell(this)" title="进度/成本">进度/成本</td>
+                  <td class="editable" ondblclick="editCell(this)" title="与甲方召开专题会议澄清标准；制定详细验收清单；分阶段验收">与甲方召开专题会议澄清标准；制定详...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="专题会议已召开，验收清单已确认，正在按新标准调整交付物">专题会议已召开，验收清单已确认...</td>
+                  <td class="editable" ondblclick="editCell(this)" title="李经理">李经理</td>
+                  <td title="2026-07-28">2026-07-28</td>
+                  <td><span class="tag processing clickable" onclick="toggleStatus(this)">处理中</span></td>
+                  <td>
+                    <button class="btn-link" onclick="showDetail()">详情</button>
+                    <button class="btn-link" onclick="showEdit()">编辑</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 详情弹窗 -->
+<div id="detailModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-hd">
+      <h3>风险详情</h3>
+      <span class="close-btn" onclick="closeModal('detailModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="detail-row">
+        <div class="label">风险等级</div>
+        <div class="value"><span class="tag high">高</span></div>
+      </div>
+      <div class="detail-row">
+        <div class="label">风险描述</div>
+        <div class="value">高新一中机房改造延期，可能影响设备安装进度，导致整体项目延期15天</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">影响范围</div>
+        <div class="value">进度/质量</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">关联学校</div>
+        <div class="value">高新一中</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">应对方案</div>
+        <div class="value">协调学校加快机房改造进度；同步调整设备安装计划；申请工期顺延</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">目前进展情况</div>
+        <div class="value">已与校方沟通，机房改造预计本周五完成，设备安装计划已调整至下周一</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">责任人</div>
+        <div class="value">张工</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">登记时间</div>
+        <div class="value">2026-07-15</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">计划关闭时间</div>
+        <div class="value">2026-07-30</div>
+      </div>
+      <div class="detail-row">
+        <div class="label">目前状态</div>
+        <div class="value"><span class="tag processing">处理中</span></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('detailModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-hd">
+      <h3>编辑风险</h3>
+      <span class="close-btn" onclick="closeModal('editModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="form-group">
+        <label>风险描述 <span style="color:#ff4d4f;">*</span></label>
+        <textarea placeholder="请输入风险描述">高新一中机房改造延期，可能影响设备安装进度，导致整体项目延期15天</textarea>
+      </div>
+      <div class="form-group">
+        <label>概率 <span style="color:#ff4d4f;">*</span></label>
+        <select>
+          <option>高</option>
+          <option>中</option>
+          <option>低</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>影响 <span style="color:#ff4d4f;">*</span></label>
+        <select>
+          <option>高</option>
+          <option>中</option>
+          <option>低</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>影响范围</label>
+        <input type="text" value="进度/质量" placeholder="如：进度/质量/成本">
+      </div>
+      <div class="form-group">
+        <label>关联学校</label>
+        <select>
+          <option>高新一中</option>
+          <option>高新二中</option>
+          <option>高新三中</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>应对方案</label>
+        <textarea placeholder="请输入应对方案">协调学校加快机房改造进度；同步调整设备安装计划；申请工期顺延</textarea>
+      </div>
+      <div class="form-group">
+        <label>目前进展情况</label>
+        <textarea placeholder="请输入目前进展情况">已与校方沟通，机房改造预计本周五完成，设备安装计划已调整至下周一</textarea>
+      </div>
+      <div class="form-group">
+        <label>责任人 <span style="color:#ff4d4f;">*</span></label>
+        <select>
+          <option>张工</option>
+          <option>李经理</option>
+          <option>王主管</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>计划关闭时间</label>
+        <input type="date" value="2026-07-30">
+      </div>
+      <div class="form-group">
+        <label>目前状态 <span style="color:#ff4d4f;">*</span></label>
+        <select>
+          <option>待处理</option>
+          <option selected>处理中</option>
+          <option>已关闭</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('editModal')">取消</button>
+      <button class="btn btn-primary" onclick="closeModal('editModal')">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 显示详情弹窗
+function showDetail() {
+  document.getElementById('detailModal').classList.add('show');
+}
+
+// 显示编辑弹窗
+function showEdit() {
+  document.getElementById('editModal').classList.add('show');
+}
+
+// 关闭弹窗
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('show');
+}
+
+// 点击弹窗外部关闭
+window.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal')) {
+    e.target.classList.remove('show');
+  }
+});
+
+// 双击编辑单元格
+function editCell(cell) {
+  const originalText = cell.getAttribute('title') || cell.textContent.trim();
+  const isLongText = originalText.length > 50;
+
+  if (isLongText) {
+    const textarea = document.createElement('textarea');
+    textarea.value = originalText;
+    textarea.style.width = '100%';
+    textarea.style.height = '80px';
+    cell.innerHTML = '';
+    cell.appendChild(textarea);
+    textarea.focus();
+
+    textarea.addEventListener('blur', function() {
+      const newText = textarea.value.trim();
+      cell.textContent = newText.length > 30 ? newText.substring(0, 30) + '...' : newText;
+      cell.setAttribute('title', newText);
+    });
+  } else {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = originalText;
+    cell.innerHTML = '';
+    cell.appendChild(input);
+    input.focus();
+
+    input.addEventListener('blur', function() {
+      const newText = input.value.trim();
+      cell.textContent = newText;
+      cell.setAttribute('title', newText);
+    });
+  }
+}
+
+// 切换状态
+function toggleStatus(tag) {
+  const currentStatus = tag.textContent.trim();
+  const statuses = [
+    {text: '待处理', class: 'pending'},
+    {text: '处理中', class: 'processing'},
+    {text: '已关闭', class: 'closed'}
+  ];
+
+  // 创建下拉菜单
+  const dropdown = document.createElement('div');
+  dropdown.className = 'status-dropdown';
+  dropdown.style.position = 'absolute';
+
+  statuses.forEach(status => {
+    const option = document.createElement('div');
+    option.textContent = status.text;
+    if (status.text === currentStatus) {
+      option.style.background = '#e6f4ff';
+    }
+    option.addEventListener('click', function() {
+      tag.textContent = status.text;
+      tag.className = 'tag ' + status.class + ' clickable';
+      dropdown.remove();
+    });
+    dropdown.appendChild(option);
+  });
+
+  // 定位下拉菜单
+  const rect = tag.getBoundingClientRect();
+  dropdown.style.left = rect.left + 'px';
+  dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+  document.body.appendChild(dropdown);
+
+  // 点击外部关闭
+  setTimeout(() => {
+    document.addEventListener('click', function closeDropdown(e) {
+      if (!dropdown.contains(e.target) && e.target !== tag) {
+        dropdown.remove();
+        document.removeEventListener('click', closeDropdown);
+      }
+    });
+  }, 0);
+}
+</script>
+</body>
+</html>

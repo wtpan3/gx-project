@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, Date
+from sqlalchemy import Column, Integer, String, DateTime, Enum, Date, ForeignKey
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -6,6 +6,7 @@ class SoftwareModule(Base):
     __tablename__ = "software_modules"
 
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey('project_info.id'), nullable=False)
     name = Column(String(100), nullable=False)
     phase = Column(Enum('需求收集', '需求确认', '软件开发', '软件测试', '软件部署', '上线运行'), nullable=False)
     progress = Column(Integer, default=0)

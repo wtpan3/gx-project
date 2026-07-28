@@ -7,6 +7,7 @@ class Todo(Base):
     __tablename__ = "todos"
 
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey('project_info.id'), nullable=False)
     title = Column(String(200), nullable=False)
     description = Column(Text)
     priority = Column(Enum('高', '中', '低'), default='中')
@@ -16,7 +17,7 @@ class Todo(Base):
     creator_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
     source_type = Column(Enum('project', 'wbs', 'system'), default='project')
     source_id = Column(Integer)
-    transferred_from = Column(Integer)
+    transferred_from_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
     parent_id = Column(Integer, ForeignKey('todos.id', ondelete='CASCADE'))
     completed_at = Column(DateTime)
     created_at = Column(DateTime, server_default=func.now())

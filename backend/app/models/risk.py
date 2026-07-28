@@ -6,6 +6,7 @@ class Risk(Base):
     __tablename__ = "risks"
 
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey('project_info.id'), nullable=False, comment='所属项目')
     risk_desc = Column(Text, comment='风险描述')
     trigger_condition = Column(Text, comment='触发条件')
     impact_description = Column(Text, comment='影响描述')

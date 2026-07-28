@@ -27,6 +27,7 @@ export interface WbsTask {
 
   progress_note?: string;
   deliverables?: string;
+  progress: number;
 
   is_orphan: number;
   requires_material: number;
@@ -67,6 +68,7 @@ export interface WbsTaskCreate {
   construction_year?: number;
   progress_note?: string;
   deliverables?: string;
+  progress?: number;
   requires_material?: number;
   material_status?: '无要求' | '待上传' | '部分上传' | '已完成';
 }

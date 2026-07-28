@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -6,6 +6,7 @@ class ProductionLine(Base):
     __tablename__ = "production_lines"
 
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey('project_info.id'), nullable=False)
     code = Column(String(50), unique=True, nullable=False)
     name = Column(String(100), nullable=False)
     description = Column(String(500))

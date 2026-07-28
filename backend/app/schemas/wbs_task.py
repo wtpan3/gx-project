@@ -34,6 +34,7 @@ class WbsTaskBase(BaseModel):
 
     progress_note: Optional[str] = Field(None, description="进度说明")
     deliverables: Optional[str] = Field(None, description="交付物")
+    progress: int = Field(0, description="进度%(0-100，可手工编辑)")
 
     is_orphan: int = Field(0, description="是否孤儿任务：0=否，1=是")
     requires_material: int = Field(0, description="是否需要上传材料：0=否，1=是")
@@ -72,6 +73,7 @@ class WbsTaskUpdate(BaseModel):
 
     progress_note: Optional[str] = None
     deliverables: Optional[str] = None
+    progress: Optional[int] = None
 
     is_orphan: Optional[int] = None
     requires_material: Optional[int] = None

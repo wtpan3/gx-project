@@ -31,6 +31,7 @@ class WbsTask(Base):
 
     progress_note = Column(Text)
     deliverables = Column(String(255))
+    progress = Column(Integer, nullable=False, default=0)
 
     is_orphan = Column(Integer, default=0)
     requires_material = Column(Integer, default=0)

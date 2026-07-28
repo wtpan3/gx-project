@@ -6,6 +6,7 @@ class School(Base):
     __tablename__ = "schools"
 
     id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey('project_info.id'), nullable=False)
     code = Column(String(50))
     full_name = Column(String(200), nullable=False)
     region = Column(String(100))

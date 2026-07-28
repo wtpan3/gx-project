@@ -110,13 +110,15 @@ CREATE TABLE project_info (
 -- ============================================================
 CREATE TABLE wbs_tasks (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    task_code VARCHAR(50) NOT NULL UNIQUE COMMENT '任务编码',
+    project_id INT NOT NULL COMMENT '所属项目',
+    task_code VARCHAR(50) UNIQUE NOT NULL COMMENT '任务编码',
+    parent_id INT COMMENT '父任务ID',
     project_phase_l1 VARCHAR(50) NOT NULL COMMENT 'L1项目阶段',
     sub_phase_l2 VARCHAR(50) NOT NULL COMMENT 'L2子阶段',
     task_package_l3 VARCHAR(100) NOT NULL COMMENT 'L3工作任务包',
     work_content_l4 VARCHAR(200) NOT NULL COMMENT 'L4工作内容',
     work_detail_l5 VARCHAR(200) COMMENT 'L5工作明细',
-    priority ENUM('高','中','低') NOT NULL DEFAULT '中' COMMENT '优先级',
+    priority ENUM('高','中','低') NOT NULL COMMENT '优先级',
     stage_type ENUM('到货验收','加电测试','校级验收','培训','无') COMMENT '关联阶段类型',
     plan_start_date DATE NOT NULL COMMENT '计划开始时间',
     plan_end_date DATE NOT NULL COMMENT '计划结束时间',
@@ -130,17 +132,25 @@ CREATE TABLE wbs_tasks (
     source_device_id INT COMMENT '来源设备记录ID',
     construction_year INT COMMENT '建设年份',
     is_orphan TINYINT DEFAULT 0 COMMENT '是否孤儿任务',
+    requires_material TINYINT DEFAULT 0 COMMENT '是否需要上传材料',
+    material_status ENUM('无要求','待上传','部分上传','已完成') COMMENT '材料状态',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project_info(id),
+    FOREIGN KEY (parent_id) REFERENCES wbs_tasks(id) ON DELETE SET NULL,
     FOREIGN KEY (responsible_person_id) REFERENCES users(id),
-    FOREIGN KEY (school_id) REFERENCES schools(id)
-) COMMENT='WBS任务表';
+    FOREIGN KEY (school_id) REFERENCES schools(id),
+    INDEX idx_project (project_id),
+    INDEX idx_parent (parent_id),
+    INDEX idx_school (school_id)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WBS任务表';
 
 -- ============================================================
 -- 9. devices - 设备信息表
 -- ============================================================
 CREATE TABLE devices (
     id INT PRIMARY KEY AUTO_INCREMENT,
+    project_id INT NOT NULL COMMENT '所属项目',
     project_name VARCHAR(100) NOT NULL COMMENT '项目名称',
     construction_year INT NOT NULL COMMENT '建设年份',
     system_name VARCHAR(100) COMMENT '系统名称',
@@ -166,9 +176,12 @@ CREATE TABLE devices (
     remark TEXT COMMENT '备注',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project_info(id),
     FOREIGN KEY (school_id) REFERENCES schools(id),
-    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
-) COMMENT='设备信息表';
+    FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
+    INDEX idx_project (project_id),
+    INDEX idx_school (school_id)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备信息表';
 
 -- ============================================================
 -- 10. trainings - 培训计划表

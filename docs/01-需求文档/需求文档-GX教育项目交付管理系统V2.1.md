@@ -56,7 +56,7 @@
 - 校园经理是项目团队内部角色，并非校方人员
 - 每个校园经理负责一所或多所学校的项目交付工作
 - 可查看项目全局数据以了解整体进度、对齐工作节奏
-- 可参与学校、设备字典、模板等基础数据的维护
+- 可参与学校、模板等基础数据的维护
 - 项目周报仅只读（由项目经理统一编制）
 
 ### 2.3 详细权限对照表
@@ -66,8 +66,8 @@
 | **系统管理** |        |          |                |
 | 用户管理     |  读写  |   读写   |       ✗        |
 | 学校管理     |  读写  |   读写   |      读写      |
-| 设备字典 |  读写  |   读写   |      读写      |
 | 供应商管理   |  读写  |   读写   |       ✗        |
+| 产线类型管理 |  读写  |   读写   |       ✗        |
 | 模板管理     |  读写  |   读写   |      读写      |
 | 数据字典维护 |  读写  |   读写   |       ✗        |
 | 项目信息管理 |  读写  |   读写   |       ✗        |
@@ -99,8 +99,8 @@
 
 | 设计考量                           | 说明                                                         |
 | ---------------------------------- | ------------------------------------------------------------ |
-| 项目经理拥有系统管理核心权限       | 项目经理是项目实际执行负责人，需要独立管理学校、设备字典、模板等基础数据 |
-| 校园经理可维护学校、设备字典、模板 | 校园经理负责一线交付，赋予这些权限可提升工作效率             |
+| 项目经理拥有系统管理核心权限       | 项目经理是项目实际执行负责人，需要独立管理学校、产线类型、模板等基础数据 |
+| 校园经理可维护学校、模板           | 校园经理负责一线交付，赋予这些权限可提升工作效率             |
 | 校园经理可查看全局数据             | 有助于各学校了解整体进度，主动协调配合                       |
 | 报告管理仅只读                     | 正式汇报工具，统一口径，由项目经理编制                       |
 | 操作日志仅管理员可见               | 涉及系统安全审计                                             |
@@ -116,12 +116,13 @@
 | ---- | ------------ | ---------------------------- | :----: | :------: | :------: | :------: |
 | 1    | 用户管理     | 系统用户账号与权限管理       |   ✔    |    ✔     |    ✗     | ✅完成 |
 | 2    | 学校管理     | 学校基础信息与对接人管理     |   ✔    |    ✔     |    ✔     | ⬜未开发 |
-| 3    | 设备字典 | 设备规格模板统一维护         |   ✔    |    ✔     |    ✔     | ⬜未开发 |
-| 4    | 供应商管理   | 设备供应商/厂家信息维护      |   ✔    |    ✔     |    ✗     | ⬜未开发 |
+| 3    | ~~设备字典~~ | ~~设备规格模板统一维护~~（已废弃，见 §4.3） |   —    |    —     |    —     | ❌已废弃 |
+| 4    | 供应商管理   | 以设备为主体查看与指定供应商 |   ✔    |    ✔     |    ✗     | ⬜未开发 |
 | 5    | 模板管理     | 标准文件模板上传、管理与下载 |   ✔    |    ✔     |    ✔     | ⬜未开发 |
 | 6    | 数据字典维护 | 系统下拉选项统一维护         |   ✔    |    ✔     |    ✗     | ⬜未开发 |
 | 7    | 项目信息管理 | 项目基本信息与整体状态管理   |   ✔    |    ✔     |    ✗     | ⬜未开发 |
 | 8    | 操作日志     | 系统操作记录与审计           |   ✔    |    ✗     |    ✗     | ⬜未开发 |
+| 9    | 产线类型管理 | 产线清单及产线下挂系统配置（见 §4.10） |   ✔    |    ✔     |    ✗     | ⬜未开发 |
 
 ### 3.2 业务模块
 
@@ -181,20 +182,23 @@
 | 校园经理     | 下拉框（用户） | 关联用户表，仅显示角色为campus_manager的用户 | 是   |
 | 校方联系人   | 文本           | 学校方的对接人姓名                           | 是   |
 | 校方联系电话 | 文本           | 校方联系人电话                               | 是   |
-| 当前项目状态 | 下拉框         | 未启动 / 实施中 / 试运行 / 已验收 / 维保中   | 是   |
+| 是否重点学校 | 是/否          | 标记重点学校，用于首页看板突出显示           | 否   |
 | 备注         | 文本域         | 补充说明                                     | 否   |
 
 #### 4.2.2 业务规则
 - 学校编码全局唯一，创建后不可修改
 - 被业务数据引用的学校不可删除
+- **学校当前状态不在系统管理中手工维护**：学校交付状态由 WBS 任务进度自动推导，系统管理仅维护学校档案基础信息。状态展示见首页看板与交付进展页
 
 #### 4.2.3 功能清单
-- 学校列表查看（按名称、编码、状态、校园经理搜索）
+- 学校列表查看（按名称、编码、校园经理搜索）
 - 新增 / 编辑 / 删除学校
 - 批量导入（Excel）
 
 
-### 4.3 设备字典
+### 4.3 设备字典（已废弃）
+
+> ⚠️ **本章节已废弃，不再开发。** 原 `device_systems` 表已删除，设备规格（品牌/型号/参数）直接存于 `devices` 表并随设备录入，不再维护独立的规格字典；设备的统一维护入口为「设备信息」页。系统与产线的归属关系见 [4.10 产线类型管理](#410-产线类型管理)。以下内容仅作历史留档。
 
 > **权限**：管理员、项目经理、校园经理（读写）
 
@@ -241,6 +245,26 @@
 
 > **权限**：管理员、项目经理
 
+#### 4.4.1 功能说明
+
+本页**以设备为主体**：列表每行是一台设备，展示该设备对应的供应商及其联系方式，用于按设备维度查看与指定供应商。供应商本身的主数据通过页面上的「供应商主数据」入口单独维护。
+
+#### 4.4.2 列表字段（主体：设备）
+
+| 字段名   | 说明                                   | 来源                    |
+| -------- | -------------------------------------- | ----------------------- |
+| 设备名称 | 设备名称                               | devices.device_name     |
+| 系统名称 | 设备所属系统                           | devices.system_name     |
+| 型号     | 设备型号                               | devices.model           |
+| 设备来源 | 三方外采 / 库存设备                    | devices.source          |
+| 供应商   | 该设备的供应商，未指定时显示"未指定"   | devices.supplier_id     |
+| 联系人   | 供应商对接人，由供应商主数据带出       | suppliers.contact_person |
+| 联系电话 | 供应商对接人电话，由供应商主数据带出   | suppliers.contact_phone |
+
+**筛选维度**：设备名称、系统名称、设备来源、供应商（含"未指定"）
+
+#### 4.4.3 供应商主数据字段
+
 | 字段名     | 类型         | 说明            | 必填 |
 | ---------- | ------------ | --------------- | ---- |
 | 供应商名称 | 文本（唯一） | 供应商/厂家全称 | 是   |
@@ -249,7 +273,17 @@
 | 联系邮箱   | 文本         | 对接人邮箱      | 否   |
 | 备注       | 文本域       | 说明            | 否   |
 
-**功能清单**：列表查看、新增/编辑/删除供应商
+#### 4.4.4 业务规则
+- 一个供应商可对应多台设备，一台设备只有一个供应商（devices.supplier_id 单值外键）
+- 设备来源为「库存设备」时供应商可为空；来源为「三方外采」时应指定供应商
+- 已被设备关联的供应商不可直接删除，需先解除设备关联
+- 供应商联系方式只在主数据维护一处，设备列表只读展示，避免同一供应商在多台设备上填写不一致
+
+#### 4.4.5 功能清单
+- 设备-供应商列表查看与筛选
+- 单台指定供应商 / 勾选后批量指定供应商
+- 供应商主数据：列表查看、新增/编辑/删除
+- 导出 Excel
 
 
 ### 4.5 模板管理
@@ -437,6 +471,48 @@
 **功能清单**：日志列表查看（按模块、操作人、时间筛选）、日志导出（Excel）、永久保留。
 
 
+### 4.10 产线类型管理
+
+> **权限**：管理员、项目经理
+
+#### 4.10.1 功能说明
+
+维护产线清单，并配置**每条产线下挂哪些系统**。产线本身不直接关联设备，而是通过系统间接关联，形成 `产线 1:N 系统 1:N 设备` 的三层结构。此处维护的系统清单即「设备信息」页筛选与分组所用的系统名称，两处同源。
+
+#### 4.10.2 数据字段
+
+| 字段名   | 类型         | 说明                                | 必填 |
+| -------- | ------------ | ----------------------------------- | ---- |
+| 产线编码 | 文本（唯一） | 如 PL-PLATFORM，创建后不可修改      | 是   |
+| 产线名称 | 文本         | 如 平台产线、启明、大课堂           | 是   |
+| 所属系统 | 多选         | 该产线下挂的系统，可多选，可为空    | 否   |
+| 说明     | 文本         | 产线用途说明                        | 否   |
+| 状态     | 启用 / 停用  | 停用后不在设备筛选的产线下拉中出现  | 是   |
+
+#### 4.10.3 业务规则
+- **一条产线可挂多个系统（一对多）；一个系统只能归属一条产线**。将已属其他产线的系统勾选到当前产线，保存后从原产线迁出
+- 产线编码全局唯一，创建后不可修改
+- 已挂系统的产线不可删除，只能停用；需先解除系统归属
+- 「设备信息」页按产线筛选 = 取该产线下所有系统 → 再取这些系统下的全部设备
+- 系统名称与「设备信息」页同源，新增系统后立即在设备筛选/分组中可选
+
+#### 4.10.4 功能清单
+- 产线列表查看（按产线名称、所属系统、状态筛选），列表行内展示所属系统
+- 新增 / 编辑 / 停用产线
+- 配置所属系统（多选，标注系统当前归属的产线）
+
+#### 4.10.5 实现现状与待办
+
+| 项 | 现状 | 待办 |
+| -- | ---- | ---- |
+| 产线表 | `production_lines` 已建（含 id/project_id/code/name/description/is_enabled），库内 3 条为 `seed_demo.py` 演示数据 | 替换为真实产线清单（平台产线、启明、大课堂、科创教育等） |
+| 系统实体 | **无独立表**。系统当前仅以 `devices.system_name` 文本存在，实际 6 个值 | 新建 `systems` 表（含 `production_line_id`），将 6 个系统名归集为字典行并分配产线 |
+| 产线-系统关联 | **未建立**。设备与产线之间无任何字段可达 | `systems.production_line_id` 建立一对多 |
+| 设备-系统关联 | `devices.system_name` 文本匹配 | `systems` 建成后迁移为 `devices.system_id` 外键，回填 1240 条存量设备 |
+
+> ⚠️ 上表「待办」为本模块开发前置条件，未完成前「按产线筛选设备」无法实现。
+
+
 ## 五、全局交互规范
 
 ### 5.1 全局筛选器
@@ -603,10 +679,10 @@
 | -------- | ------------------------ | ------------------------------ |
 | 覆盖学校 | 项目总学校数             | 学校表                         |
 | 重点学校 | 标记为重点的学校数       | 学校表.is_key                  |
-| 系统总数 | 项目系统总数             | 系统表                         |
-| 设备类型 | 硬件设备种类数           | 设备字典表（按设备名称去重）   |
-| 产线类型 | 生产线种类数             | 产线类型字典表                 |
-| 外采设备 | 需外部采购的设备种类数   | 设备字典表（采购类型=三方外采） |
+| 系统总数 | 项目系统总数             | 产线类型管理维护的系统清单     |
+| 设备类型 | 硬件设备种类数           | 设备信息表（按设备名称去重）   |
+| 产线类型 | 生产线种类数             | 产线表 production_lines        |
+| 外采设备 | 需外部采购的设备种类数   | 设备信息表（设备来源=三方外采） |
 | 硬件总数 | 硬件设备总台数           | 设备信息表                     |
 
 #### 6.1.3 进度区（三栏+整体进度）
@@ -967,12 +1043,12 @@ WBS 为多级层级结构，父任务状态由子任务驱动，规则如下：
 | 字段名                                               | 类型           | 说明                                      | 必填     |
 | ---------------------------------------------------- | -------------- | ----------------------------------------- | -------- |
 | 项目名称                                             | 文本           | 自动填充                                  | 系统生成 |
-| 建设年份                                             | 文本           | 从设备字典自动带入，只读              | 系统生成 |
-| 系统名称                                             | 下拉框         | 从设备字典选择                        | 是       |
-| 设备名称                                             | 下拉框         | 支持模糊搜索，旁有"查看规格详情"快速链接  | 是       |
-| 品牌                                                 | 文本           | **从字典复制到设备记录**，只读            | 系统生成 |
-| 型号                                                 | 文本           | **从字典复制到设备记录**，只读            | 系统生成 |
-| 参数                                                 | 文本           | **从字典复制到设备记录**，只读            | 系统生成 |
+| 建设年份                                             | 数字           | 录入时填写                                | 是       |
+| 系统名称                                             | 下拉框         | 从「系统管理 → 产线类型管理」维护的系统清单选择；所属产线由该系统带出 | 是       |
+| 设备名称                                             | 文本           | 录入时填写，旁有"查看规格详情"快速链接    | 是       |
+| 品牌                                                 | 文本           | 录入时填写，存于 devices 表               | 是       |
+| 型号                                                 | 文本           | 录入时填写，存于 devices 表               | 是       |
+| 参数                                                 | 文本           | 录入时填写，存于 devices 表               | 否       |
 | 类型                                                 | 下拉框         | **从字典复制到设备记录**，只读            | 系统生成 |
 | 单位                                                 | 文本           | **从字典复制到设备记录**，只读            | 系统生成 |
 | 采购类型（设备来源）                                 | 下拉框         | 库存发货 / 外部采购 | 是       |
@@ -987,7 +1063,7 @@ WBS 为多级层级结构，父任务状态由子任务驱动，规则如下：
 | 供应商                                               | 下拉框         | 仅当采购类型=外部采购时显示               | 条件显示 |
 | 备注                                                 | 文本域         | 补充说明                                  | 否       |
 
-> **设备快照存储说明**：品牌、型号、参数、类型、单位五个字段在设备录入时**从设备字典复制值**到设备记录中，而非引用字典ID。后续字典项修改或删除，不影响已录入设备的历史规格信息。
+> **规格存储说明**：品牌、型号、参数、类型、单位五个字段**直接存于 devices 表**，随设备录入或导入时填写，不存在独立的规格字典（原 `device_systems` 表已删除）。每台设备的规格信息自持，互不影响。
 
 #### 6.4.3 设备状态与WBS任务状态联动
 
@@ -1614,8 +1690,8 @@ GX 后端 API（/api/todos、/api/delivery、/api/risks）
 
 ### 侧边栏（系统管理入口）
 
-- 管理员/项目经理：用户管理、学校管理、设备字典、供应商管理、模板管理、数据字典维护、项目信息管理、操作日志
-- 校园经理：学校管理、设备字典、模板管理
+- 管理员/项目经理：用户管理、学校管理、供应商管理、产线类型管理、模板管理、数据字典维护、项目信息管理、操作日志
+- 校园经理：学校管理、模板管理
 
 
 ## 八、数据导入规范
@@ -1694,11 +1770,13 @@ GX 后端 API（/api/todos、/api/delivery、/api/risks）
 │   ├── 培训记录 (trainings) —— 多对多（校级培训按组织学校关联；入口在交付进展）
 │   ├── 风险管理 (risks) —— 一对多
 │   └── 需求登记 (demands) —— 一对多
-├── 设备字典 (device_systems)
-│   ├── 设备信息 (devices) —— 一对多（仅建设年份≤当前年份，规格复制存储）
-│   └── WBS自动生成 —— 数据来源
+├── 产线类型管理 (production_lines)
+│   └── 系统 —— 一对多（一条产线挂多个系统，一个系统只属一条产线）
+│       └── 设备信息 (devices) —— 一对多（devices.system_name 归集）
+│       ↑ 设备不直接存产线，按产线筛设备 = 产线→系统→设备 两跳
 ├── 供应商管理 (suppliers)
-│   └── 设备信息 (devices) —— 一对多（仅外部采购）
+│   └── 设备信息 (devices) —— 一对多（devices.supplier_id；库存设备可为空）
+│       ↑ 页面主体为设备，供应商联系方式由 suppliers 带出只读展示
 ├── 模板管理 (templates)
 │   └── 交付材料库 —— 模板下载关联
 └── 项目信息管理 (project_info)
@@ -1755,15 +1833,17 @@ GX 后端 API（/api/todos、/api/delivery、/api/risks）
 | 表名                 | 核心字段                                                     |
 | -------------------- | ------------------------------------------------------------ |
 | users                | id, username, password_hash, real_name, role, phone, email, status |
-| schools              | id, code, full_name, region, address, campus_manager_id, contact_person, contact_phone, project_status |
-| device_systems       | id, project_name, construction_year, system_name, device_name, brand, model, params, type, unit, plan_quantity, is_enabled |
+| schools              | id, project_id, code, full_name, region, address, campus_manager_id, contact_person, contact_phone, is_key, remark（project_status 字段保留但不在系统管理维护，见 §4.2.2） |
+| ~~device_systems~~   | 已删除。设备规格直接存于 devices 表，不再维护独立规格字典 |
+| production_lines     | id, project_id, code, name, description, is_enabled |
+| systems ⚠️待建        | id, project_id, name, production_line_id（系统归属产线，一对多的多端）, sort_order, is_enabled |
 | suppliers            | id, name, contact_person, contact_phone, contact_email, remark |
 | templates            | id, name, type, stage, file_path, version, description, status |
 | dict_items           | id, category, label, value, sort_order, is_enabled           |
 | project_info         | id, project_name, project_code, start_date, end_date, overall_status |
 | wbs_tasks            | id, project_phase_l1, sub_phase_l2, task_package_l3, work_content_l4, work_detail_l5, stage_type, plan_start_date, plan_end_date, status, actual_start_date, actual_end_date, **responsible_person_id**（需求阶段写assignee_id，实现时改名）, progress_note, deliverables, school_id, source_device_id, construction_year, is_orphan |
 | task_attachments     | id, task_id, file_name, file_path, file_size, upload_by, upload_time, description |
-| devices              | id, project_name, construction_year, system_id, device_name, brand, model, params, type, unit, source, quantity, school_id, install_location, status, supplier_id, plan_arrival_date, delivery_no, delivery_date, arrival_date, install_date, debug_date, accept_date, remark |
+| devices              | id, project_id, project_name, construction_year, system_name（⚠️现状为文本；systems 表建成后迁移为 system_id 外键）, device_name, brand, model, params, type, unit, source, quantity, school_id, install_location, status, supplier_id, plan_arrival_date, delivery_no, delivery_date, arrival_date, install_date, debug_date, accept_date, remark |
 | trainings            | id, type, content, target_audience, person_count, duration_days, location, method, exam_method, plan_date, actual_date, status, related_task_id, is_district |
 | training_schools     | id, training_id, school_id                                   |
 | training_attachments | id, training_id, file_name, file_path, file_size, upload_by, upload_time, type |
@@ -1777,7 +1857,6 @@ GX 后端 API（/api/todos、/api/delivery、/api/risks）
 | operation_logs       | id, user_id, module, action, target_id, before_data(JSON), after_data(JSON), ip_address, created_at, batch_file_name, batch_success_count, batch_fail_count |
 | **report_templates** | **id, name, role_scope, output_format, chapter_structure(JSON), placeholder_mapping(JSON), is_default, created_at, updated_at** |
 | **demands**          | **id, description, priority, status, responsible_person_id, school_id, propose_time, expected_solve_date, solution, created_at, updated_at** |
-| **product_lines**    | **id, name, description, sort_order, is_enabled** |
 | **wechat_bindings**  | **id, user_id, wechat_id, wechat_nickname, bind_time, is_active** |
 | **knowledge_docs**   | **id, file_name, file_path, file_size, file_type, upload_by, upload_time, vector_status, chunk_count** |
 | **chat_messages**    | **id, user_id, session_id, role, content, created_at** |

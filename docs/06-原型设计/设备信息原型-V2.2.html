@@ -200,7 +200,7 @@
         <strong>外采设备:</strong> 当设备来源=外部采购时，详情弹窗额外显示<strong>供应商 + 供应商联系人</strong>（姓名、电话）；库存发货时隐藏这两行。<br>
         <strong>查看规格详情:</strong> 详情弹窗内"设备名称"旁显示品牌/型号/参数等规格信息（存储在 devices 表的 brand/model/params 字段）。<br>
         <strong>序列号:</strong> 列表页不展示，仅在<strong>详情弹窗</strong>内显示（批次序列号列表/范围）。<br>
-        <strong>产线关联:</strong> devices 表直接关联 production_line_id → production_lines，筛选"产线"显示该产线下所有设备。<br>
+        <strong>产线关联:</strong> 设备不直接存产线，产线通过<strong>系统</strong>间接关联：产线 1:N 系统，系统 1:N 设备。筛选"产线"= 取该产线下所有系统，再取这些系统下的全部设备。产线与系统的归属关系在「系统管理 → 产线类型管理」维护，本页系统名称与之同源。<br>
         <strong>状态联动:</strong> WBS 任务完成自动同步设备状态（WBS→设备），手动改设备状态则提醒责任人更新 WBS（设备→WBS）。<br>
         <strong>工具区（右上角）:</strong> 批量导入（按学校）/ 批量更新状态 / 导出 三个按钮并排。"导出"点击后可选 Excel（正式报告）或 CSV（数据分析）格式。<br>
         <strong>V2.2 增强 (§6.4.5):</strong> ① 顶部统计卡片（设备总数 + 待发货/已到货/已安装/已调试/运行中，与首页硬件交付进度环形图一致，点击可筛选）② 多维分组视图 TAB（列表/按学校/按产线/按系统/按状态）③ 筛选第一行 5 项（项目名称/产线/系统名称/学校/当前状态）④ 分配学校支持"未分配"选项 ⑤ 序列号范围搜索（支持单号"SN12345"、数字范围"1-50"、混合范围"A001-A050"；输入单号如"40"→匹配"1-50"，"A030"→匹配"A001-A050"）。<br>
@@ -274,7 +274,7 @@
             </div>
             <div class="fitem">
               <label>系统名称:</label>
-              <select><option>全部</option><option>智慧教室系统</option><option>AI实验室系统</option><option>校园安防系统</option></select>
+              <select><option>全部</option><option>数智工作台</option><option>教育数据指挥中心</option><option>智能应用创编平台</option><option>应用能力服务</option><option>AI算力中心</option><option>智能交互终端</option></select>
             </div>
             <div class="fitem">
               <label>学校:</label>
@@ -479,17 +479,17 @@
 
           <!-- ========== 按系统分组 ========== -->
           <div class="group-view" id="view-system">
-            <div class="group-item" onclick="drillDown('系统','智慧体育')">
-              <div class="group-head"><div class="group-name">智慧体育<span class="g-count">（28 台）</span></div><div class="group-pct">完成度 39.3%</div></div>
+            <div class="group-item" onclick="drillDown('系统','AI算力中心')">
+              <div class="group-head"><div class="group-name">AI算力中心<span class="g-count">（28 台）</span></div><div class="group-pct">完成度 39.3%</div></div>
               <div class="group-bar"><div class="g-fill" style="width:39.3%"></div></div>
               <div class="group-detail"><span>待发货 3</span><span>已到货 3</span><span>已安装 6</span><span>已调试 5</span><span>运行中 11</span></div>
             </div>
-            <div class="group-item" onclick="drillDown('系统','AI英语听说')">
-              <div class="group-head"><div class="group-name">AI英语听说教学<span class="g-count">（24 台）</span></div><div class="group-pct">完成度 25.0%</div></div>
+            <div class="group-item" onclick="drillDown('系统','智能交互终端')">
+              <div class="group-head"><div class="group-name">智能交互终端<span class="g-count">（24 台）</span></div><div class="group-pct">完成度 25.0%</div></div>
               <div class="group-bar"><div class="g-fill" style="width:25%"></div></div>
               <div class="group-detail"><span>待发货 4</span><span>已到货 4</span><span>已安装 6</span><span>已调试 4</span><span>运行中 6</span></div>
             </div>
-            <div style="padding:12px 16px;font-size:12px;color:rgba(0,0,0,.4);">…共 25 个系统（其余略）</div>
+            <div style="padding:12px 16px;font-size:12px;color:rgba(0,0,0,.4);">…共 6 个系统（其余略）</div>
           </div><!-- /view-system -->
 
           <!-- ========== 按状态分组 ========== -->
@@ -535,14 +535,14 @@
       <div class="detail-grid">
         <div class="k">项目名称</div><div class="v">高新区AI+教育项目</div>
         <div class="k">建设年份</div><div class="v">2026</div>
-        <div class="k">系统名称</div><div class="v">AI实验室系统</div>
+        <div class="k">系统名称</div><div class="v">AI算力中心</div>
         <div class="k">设备名称</div><div class="v">AI算力服务器 <button class="btn-link" style="font-size:12px;">📋 查看规格详情</button></div>
         <div class="k">品牌</div><div class="v">浪潮</div>
         <div class="k">型号</div><div class="v">NF5280M6</div>
         <div class="k">参数</div><div class="v">4×GPU A100</div>
         <div class="k">设备类型</div><div class="v">硬件</div>
         <div class="k">单位</div><div class="v">台</div>
-        <div class="k">所属产线</div><div class="v">启明</div>
+        <div class="k">所属产线</div><div class="v">启明 <span style="font-size:12px;color:rgba(0,0,0,.4);">（由系统「AI算力中心」所属产线带出）</span></div>
       </div>
     </div>
 
@@ -603,7 +603,7 @@
     <div class="detail-section">
       <h4>第 1 步：下载导入模板</h4>
       <p style="font-size:13px;color:rgba(0,0,0,.65);line-height:1.7;margin-bottom:12px;">
-        按模板格式填写设备数据，<strong>每行一条设备记录</strong>。品牌/型号/参数等规格由系统按"建设年份+系统名称+设备名称"自动从字典带出，无需填写。
+        按模板格式填写设备数据，<strong>每行一条设备记录</strong>。品牌/型号/参数等规格<strong>需随行填写</strong>（规格直接存于 devices 表，无独立规格字典）。
       </p>
       <a href="设备导入模板.xlsx" download><button class="btn btn-primary">⬇️ 下载设备导入模板.xlsx</button></a>
     </div>
@@ -616,9 +616,10 @@
           <tr><th>列名</th><th>必填</th><th>说明</th></tr>
         </thead>
         <tbody>
-          <tr><td>建设年份</td><td style="color:#ff4d4f;">是</td><td>用于匹配字典规格，如 2026</td></tr>
-          <tr><td>系统名称</td><td style="color:#ff4d4f;">是</td><td>须与字典中系统名称一致</td></tr>
-          <tr><td>设备名称</td><td style="color:#ff4d4f;">是</td><td>须与字典中设备名称一致（规格自动带出）</td></tr>
+          <tr><td>建设年份</td><td style="color:#ff4d4f;">是</td><td>如 2026</td></tr>
+          <tr><td>系统名称</td><td style="color:#ff4d4f;">是</td><td>须与「系统管理 → 产线类型管理」中维护的系统名称一致</td></tr>
+          <tr><td>设备名称</td><td style="color:#ff4d4f;">是</td><td>自由填写</td></tr>
+          <tr><td>品牌 / 型号 / 参数</td><td style="color:#ff4d4f;">是</td><td>随行填写，存入 devices 表</td></tr>
           <tr><td>数量</td><td style="color:#ff4d4f;">是</td><td>本批次设备数量</td></tr>
           <tr><td>序列号范围</td><td>否</td><td>单号或范围，如 SN12345 或 1-50（表示 1 到 50 号）；支持单号搜索匹配范围</td></tr>
           <tr><td>分配学校</td><td>否</td><td>须与学校管理中名称一致；未定时可留空或填"未分配"</td></tr>

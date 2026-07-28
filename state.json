@@ -1,14 +1,15 @@
 {
-  "last_updated": "2026-07-28T21:15:00",
+  "last_updated": "2026-07-28T22:40:00",
   "session_type": "文档同步",
-  "current_focus": "系统管理原型去设备字典 + 前端坏路由修复，已完成",
+  "current_focus": "原型与需求文档同步：学校去状态维护、供应商改设备主体、产线-系统一对多",
   "completed_this_session": [
-    "device_systems表引用清理（文档层）：详细设计文档（页面-表格映射/物理表清单/首页统计数据源/模块十二废弃标注/模块八表注释）、README（基础表清单/中文编码案例/历史教训P007）、代码规范（表名示例）、设备信息原型（产线关联/规格详情说明）全部同步。commit 3c774d5",
-    "系统管理原型改造（系统管理原型-V1.0.html）：①删除「设备字典」Tab按钮 ②删除设备字典内容区(原277-395行，含6项筛选+13列表格) ③删除设备弹窗deviceModal(原1061-1175行，13个表单字段) ④删除JS的tabMap.device与showAddDevice/showEditDevice ⑤新增「产线类型管理」Tab补齐原型缺口(前端菜单实际有此项而原型无)：筛选区(产线名称/状态)+6列表格(编码/名称/说明/状态/创建时间/操作)+lineModal弹窗(编码/名称/说明/状态)，字段对齐 production_lines 表(code/name/description/is_enabled) ⑥调整内容区DOM顺序使其与Tab按钮顺序一致(user→school→supplier→line→template)",
-    "原型改造中修正自己的2处错误：初版误用了原型里不存在的CSS类 tag-green 与 note，改为已有的 tag enabled / tag disabled 并删除note块",
-    "前端device_systems残留清理：MainLayout.tsx删除左侧菜单「设备字典」项(原49行)与面包屑映射(原73行)、删除因此变为未使用的DatabaseOutlined导入",
-    "前端Dashboard坏路由修复：routeMap中4处设备下钻全部指向不存在的路由(App.tsx只有/device-info，无/devices也无/device-systems)。系统总数→/device-info?groupBy=system、设备类型→/device-info、外采设备→/device-info?filter=external、硬件总数→/device-info。修复前点这些卡片会跳空白页",
-    "验证：①npx tsc --noEmit 零错误 ②npm run build 成功(产物-117B) ③前端源码grep device-systems/device_systems/DeviceSystem 零残留 ④Playwright实测原型11个Tab逐一点击切换全部OK、产线弹窗可打开(display:flex)、表格3行6列渲染正常、0个JS错误"
+    "系统管理原型：学校管理去掉当前状态（筛选/表格列/弹窗字段），弹窗改为维护is_key重点学校",
+    "系统管理原型：供应商管理改为以设备为主体（设备名称/系统/型号/来源/供应商/联系人/电话），新增供应商主数据弹窗+指定供应商弹窗（单台/批量）",
+    "系统管理原型：产线类型管理新增所属系统列（一对多标签展示）+配置系统多选弹窗（标注系统当前归属产线）",
+    "设备信息原型：系统名称下拉/按系统分组/详情弹窗统一为库内6个真实系统名，与产线Tab同源",
+    "设备信息原型：修正产线关联描述（设备不直接存产线，产线→系统→设备两跳），清理已删device_systems的规格字典引用",
+    "需求文档：4.2学校去project_status必填改is_key、4.3设备字典标废弃、4.4供应商重写为设备主体、新增4.10产线类型管理、修正3.1总览/十数据关联/十二数据库草案共18处设备字典残留",
+    "Playwright验证11个Tab单显、表头单元格数一致、3个新弹窗可开、0 JS错误"
   ],
   "completed_modules": [
     "用户认证(JWT)",
@@ -28,6 +29,11 @@
   ],
   "in_progress": [],
   "pending": [
+    "【本次新增·前置】新建systems表(id/project_id/name/production_line_id/sort_order/is_enabled)，将devices.system_name的6个值归集为字典行并分配产线",
+    "【本次新增·前置】devices.system_name(文本)迁移为system_id外键，回填1240条存量设备",
+    "【本次新增】production_lines替换seed_demo演示数据(智能制造/软件开发/内容制作产线)为真实产线清单(平台产线/启明/大课堂/科创教育等)",
+    "【本次新增】schools.project_status字段保留但已无维护入口，需确认由WBS进度自动推导的实现方案（关联known_issues环形图6态vs字段5态不一致）",
+    "【本次新增】devices.supplier_id当前1240台全为空，需补供应商指定数据",
     "【最优先】修复 project-plan.spec.ts:63 日期倒挂用例（6/7中唯一失败）",
     "需求文档V2.3的§4系统管理缺「产线类型管理」章节（原型与前端菜单都已有此模块，需求文档漏了，建议补为§4.10或插入§4.5）",
     "父子越界409二选一弹窗仍无E2E覆盖（建议补API层测试直接POST越界日期验证409+expand_parent/clamp_child）",
@@ -57,13 +63,10 @@
   ],
   "next_context": "本会话完成两件事：①device_systems文档引用清理(commit 3c774d5) ②系统管理原型去设备字典+补产线类型管理Tab，并顺带修掉前端3处device_systems残留和Dashboard里4处指向不存在路由的设备下钻(原/devices和/device-systems都无路由，统一改为/device-info)。已跑tsc+build+Playwright三重验证通过。用户本次决策：原型的AI配置/微信对话/问答机器人三个Tab全部保留作未来占位，只删设备字典。下次优先修 project-plan.spec.ts:63 日期倒挂用例(先看trace确认DatePicker输入是否落值，大概率要改点日历单元格)。另发现需求文档V2.3的§4缺产线类型管理章节，已记入pending。",
   "modified_files": [
-    "docs/02-架构设计/详细设计开发文档.md(已commit 3c774d5：页面-表格映射/物理表清单/首页统计/模块十二废弃/模块八表注释)",
-    "README.md(已commit 3c774d5：基础表清单/中文编码案例/历史教训P007/修改示例改用software_modules)",
-    "docs/04-开发规范/代码规范.md(已commit 3c774d5：表名示例改为devices/wbs_tasks)",
-    "docs/06-原型设计/设备信息原型-V2.2.html(已commit 3c774d5：产线关联说明/规格详情说明)",
-    "docs/06-原型设计/系统管理原型-V1.0.html(本次：删设备字典Tab+内容区+deviceModal+2个JS函数，新增产线类型管理Tab+lineModal，调整DOM顺序)",
-    "frontend/src/components/MainLayout.tsx(本次：删设备字典菜单项+面包屑映射+DatabaseOutlined未使用导入)",
-    "frontend/src/pages/Dashboard.tsx(本次：routeMap 4处设备下钻从不存在的/devices与/device-systems改为/device-info)"
+    "docs/06-原型设计/系统管理原型-V1.0.html",
+    "docs/06-原型设计/设备信息原型-V2.2.html",
+    "docs/01-需求文档/需求文档-GX教育项目交付管理系统V2.1.md",
+    "state.json"
   ],
-  "last_decision": "本会话决定：①清理上次commit遗漏的device_systems文档引用 ②原型去掉设备字典Tab，并补上原型一直缺失的产线类型管理Tab(与前端实际菜单对齐) ③用户明确选择保留AI配置/微信对话/问答机器人三个Tab作未来占位，不删 ④用户批准顺带修前端device_systems残留，执行中另发现Dashboard的/devices也是坏路由，一并修为/device-info。更早会话决定（保留）：删除device_systems表，理由'和设备信息表重复的内容太多，所有的都可以在设备信息表里维护'。"
+  "last_decision": "系统需成为独立实体（新建systems表含production_line_id）才能落地产线-系统一对多；本次只改原型+需求文档，数据库迁移列入pending（不重建device_systems，systems仅存系统名+产线归属，无规格字段）"
 }

@@ -45,6 +45,7 @@ tbody tr:hover { background: #fafafa; }
 .tag.admin { background: #fff1f0; color: #ff4d4f; border: 1px solid #ffccc7; }
 .tag.project_manager { background: #e6f4ff; color: #1677ff; border: 1px solid #91caff; }
 .tag.campus_manager { background: #fff7e6; color: #fa8c16; border: 1px solid #ffd591; }
+.tag.sys { background: #f9f0ff; color: #722ed1; border: 1px solid #d3adf7; margin: 2px 4px 2px 0; }
 .hidden { display: none; }
 .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
 .modal.show { display: flex; }
@@ -204,17 +205,6 @@ tbody tr:hover { background: #fafafa; }
                 <input type="text" placeholder="请输入学校名称或编码">
               </div>
               <div>
-                <label>当前状态</label>
-                <select>
-                  <option>全部</option>
-                  <option>未启动</option>
-                  <option>实施中</option>
-                  <option>试运行</option>
-                  <option>已验收</option>
-                  <option>维保中</option>
-                </select>
-              </div>
-              <div>
                 <label>校园经理</label>
                 <select>
                   <option>全部</option>
@@ -237,10 +227,9 @@ tbody tr:hover { background: #fafafa; }
                   <th style="width:18%;">学校全称</th>
                   <th style="width:15%;">所属区域</th>
                   <th style="width:12%;">校园经理</th>
-                  <th style="width:10%;">校方联系人</th>
-                  <th style="width:12%;">联系电话</th>
-                  <th style="width:10%;">当前状态</th>
-                  <th style="width:11%;">操作</th>
+                  <th style="width:12%;">校方联系人</th>
+                  <th style="width:14%;">联系电话</th>
+                  <th style="width:14%;">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -251,7 +240,6 @@ tbody tr:hover { background: #fafafa; }
                   <td>张校园经理</td>
                   <td>李校长</td>
                   <td>025-8888****</td>
-                  <td><span class="tag enabled">实施中</span></td>
                   <td>
                     <button class="btn-link" onclick="showEditSchool()">编辑</button>
                     <button class="btn-link">删除</button>
@@ -264,7 +252,6 @@ tbody tr:hover { background: #fafafa; }
                   <td>张校园经理</td>
                   <td>王主任</td>
                   <td>025-8889****</td>
-                  <td><span class="tag enabled">实施中</span></td>
                   <td>
                     <button class="btn-link" onclick="showEditSchool()">编辑</button>
                     <button class="btn-link">删除</button>
@@ -274,56 +261,109 @@ tbody tr:hover { background: #fafafa; }
             </table>
           </div>
 
-          <!-- 供应商管理 -->
+          <!-- 供应商管理（以设备为主体） -->
           <div id="supplierTab" class="tab-content hidden">
             <div class="filters">
               <div>
-                <label>供应商名称</label>
-                <input type="text" placeholder="请输入供应商名称">
+                <label>设备名称</label>
+                <input type="text" placeholder="请输入设备名称">
+              </div>
+              <div>
+                <label>系统名称</label>
+                <select>
+                  <option>全部</option>
+                  <option>数智工作台</option>
+                  <option>教育数据指挥中心</option>
+                  <option>智能应用创编平台</option>
+                  <option>应用能力服务</option>
+                  <option>AI算力中心</option>
+                  <option>智能交互终端</option>
+                </select>
+              </div>
+              <div>
+                <label>设备来源</label>
+                <select>
+                  <option>全部</option>
+                  <option>三方外采</option>
+                  <option>库存设备</option>
+                </select>
+              </div>
+              <div>
+                <label>供应商</label>
+                <select>
+                  <option>全部</option>
+                  <option>华为技术有限公司</option>
+                  <option>科大讯飞股份有限公司</option>
+                  <option>未指定</option>
+                </select>
               </div>
               <button class="btn btn-primary">查询</button>
               <button class="btn">重置</button>
             </div>
             <div style="margin-bottom: 16px;">
-              <button class="btn btn-primary" onclick="showAddSupplier()">+ 新增供应商</button>
+              <button class="btn btn-primary" onclick="showAssignSupplier()">批量指定供应商</button>
+              <button class="btn" onclick="showSupplierMaster()">供应商主数据</button>
               <button class="btn">导出Excel</button>
             </div>
             <table>
               <thead>
                 <tr>
-                  <th style="width:25%;">供应商名称</th>
-                  <th style="width:15%;">联系人</th>
-                  <th style="width:15%;">联系电话</th>
-                  <th style="width:20%;">联系邮箱</th>
-                  <th style="width:15%;">备注</th>
-                  <th style="width:10%;">操作</th>
+                  <th style="width:4%;"><input type="checkbox"></th>
+                  <th style="width:15%;">设备名称</th>
+                  <th style="width:13%;">系统名称</th>
+                  <th style="width:9%;">型号</th>
+                  <th style="width:9%;">设备来源</th>
+                  <th style="width:17%;">供应商</th>
+                  <th style="width:9%;">联系人</th>
+                  <th style="width:11%;">联系电话</th>
+                  <th style="width:13%;">操作</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
+                  <td><input type="checkbox"></td>
+                  <td>AI算力服务器</td>
+                  <td>AI算力中心</td>
+                  <td>Atlas 800</td>
+                  <td>三方外采</td>
                   <td>华为技术有限公司</td>
                   <td>张经理</td>
                   <td>138****1234</td>
-                  <td>zhang@huawei.com</td>
-                  <td>智能穿戴设备供应商</td>
                   <td>
-                    <button class="btn-link" onclick="showEditSupplier()">编辑</button>
-                    <button class="btn-link">删除</button>
+                    <button class="btn-link" onclick="showAssignSupplier()">指定供应商</button>
                   </td>
                 </tr>
                 <tr>
+                  <td><input type="checkbox"></td>
+                  <td>听说考试专用耳机</td>
+                  <td>智能交互终端</td>
+                  <td>iFLYTEK H1</td>
+                  <td>三方外采</td>
                   <td>科大讯飞股份有限公司</td>
                   <td>李总监</td>
                   <td>139****5678</td>
-                  <td>li@iflytek.com</td>
-                  <td>AI语音设备供应商</td>
                   <td>
-                    <button class="btn-link" onclick="showEditSupplier()">编辑</button>
-                    <button class="btn-link">删除</button>
+                    <button class="btn-link" onclick="showAssignSupplier()">指定供应商</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td><input type="checkbox"></td>
+                  <td>智能交互大屏</td>
+                  <td>智能交互终端</td>
+                  <td>MAXHUB V6</td>
+                  <td>库存设备</td>
+                  <td style="color:rgba(0,0,0,.35);">未指定</td>
+                  <td style="color:rgba(0,0,0,.35);">—</td>
+                  <td style="color:rgba(0,0,0,.35);">—</td>
+                  <td>
+                    <button class="btn-link" onclick="showAssignSupplier()">指定供应商</button>
                   </td>
                 </tr>
               </tbody>
             </table>
+            <div style="margin-top:12px;padding:10px 12px;background:#f6f8fa;border-radius:4px;font-size:12px;color:rgba(0,0,0,.6);">
+              说明：本页主体为设备，供应商信息由 devices.supplier_id → suppliers 带出。供应商本身的名称/联系人/电话/邮箱在「供应商主数据」弹窗维护。库存设备可不指定供应商。
+            </div>
           </div>
 
           <!-- 产线类型管理 -->
@@ -332,6 +372,18 @@ tbody tr:hover { background: #fafafa; }
               <div>
                 <label>产线名称</label>
                 <input type="text" placeholder="请输入产线名称">
+              </div>
+              <div>
+                <label>所属系统</label>
+                <select>
+                  <option>全部</option>
+                  <option>数智工作台</option>
+                  <option>教育数据指挥中心</option>
+                  <option>智能应用创编平台</option>
+                  <option>应用能力服务</option>
+                  <option>AI算力中心</option>
+                  <option>智能交互终端</option>
+                </select>
               </div>
               <div>
                 <label>状态</label>
@@ -350,50 +402,77 @@ tbody tr:hover { background: #fafafa; }
             <table>
               <thead>
                 <tr>
-                  <th style="width:12%;">产线编码</th>
-                  <th style="width:18%;">产线名称</th>
-                  <th style="width:34%;">说明</th>
-                  <th style="width:10%;">状态</th>
-                  <th style="width:14%;">创建时间</th>
-                  <th style="width:12%;">操作</th>
+                  <th style="width:11%;">产线编码</th>
+                  <th style="width:13%;">产线名称</th>
+                  <th style="width:30%;">所属系统（一对多）</th>
+                  <th style="width:19%;">说明</th>
+                  <th style="width:8%;">状态</th>
+                  <th style="width:19%;">操作</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>PL-PLATFORM</td>
                   <td>平台产线</td>
+                  <td>
+                    <span class="tag sys">数智工作台</span>
+                    <span class="tag sys">智能应用创编平台</span>
+                    <span class="tag sys">应用能力服务</span>
+                  </td>
                   <td>教育平台类软硬件交付</td>
                   <td><span class="tag enabled">启用</span></td>
-                  <td>2026-07-01</td>
                   <td>
                     <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link" onclick="showBindSystem()">配置系统</button>
                     <button class="btn-link">停用</button>
                   </td>
                 </tr>
                 <tr>
-                  <td>PL-SPORTS</td>
-                  <td>体育产品线</td>
-                  <td>智慧体育相关设备与系统</td>
+                  <td>PL-QIMING</td>
+                  <td>启明</td>
+                  <td>
+                    <span class="tag sys">AI算力中心</span>
+                    <span class="tag sys">教育数据指挥中心</span>
+                  </td>
+                  <td>算力与数据中枢类交付</td>
                   <td><span class="tag enabled">启用</span></td>
-                  <td>2026-07-01</td>
                   <td>
                     <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link" onclick="showBindSystem()">配置系统</button>
+                    <button class="btn-link">停用</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>PL-CLASSROOM</td>
+                  <td>大课堂</td>
+                  <td>
+                    <span class="tag sys">智能交互终端</span>
+                  </td>
+                  <td>教室交互终端类交付</td>
+                  <td><span class="tag enabled">启用</span></td>
+                  <td>
+                    <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link" onclick="showBindSystem()">配置系统</button>
                     <button class="btn-link">停用</button>
                   </td>
                 </tr>
                 <tr>
                   <td>PL-STEAM</td>
                   <td>科创教育</td>
+                  <td><span style="color:rgba(0,0,0,.35);">未配置系统</span></td>
                   <td>创客/STEAM 实验室类交付</td>
                   <td><span class="tag disabled">停用</span></td>
-                  <td>2026-07-01</td>
                   <td>
                     <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link" onclick="showBindSystem()">配置系统</button>
                     <button class="btn-link">启用</button>
                   </td>
                 </tr>
               </tbody>
             </table>
+            <div style="margin-top:12px;padding:10px 12px;background:#f6f8fa;border-radius:4px;font-size:12px;color:rgba(0,0,0,.6);">
+              说明：一条产线可挂多个系统（一对多），一个系统只归属一条产线。此处维护的系统清单即「设备信息」页筛选与分组所用的系统名称，两处同源。
+            </div>
           </div>
 
           <!-- 模板管理 -->
@@ -976,13 +1055,10 @@ tbody tr:hover { background: #fafafa; }
           </select>
         </div>
         <div class="form-group">
-          <label>当前项目状态 <span style="color:#ff4d4f;">*</span></label>
+          <label>是否重点学校</label>
           <select>
-            <option value="not_started">未启动</option>
-            <option value="implementing" selected>实施中</option>
-            <option value="trial">试运行</option>
-            <option value="accepted">已验收</option>
-            <option value="maintenance">维保中</option>
+            <option value="0" selected>否</option>
+            <option value="1">是</option>
           </select>
         </div>
       </div>
@@ -1037,10 +1113,115 @@ tbody tr:hover { background: #fafafa; }
           <option value="0">停用</option>
         </select>
       </div>
+      <div style="padding:10px 12px;background:#f6f8fa;border-radius:4px;font-size:12px;color:rgba(0,0,0,.6);">
+        产线下挂哪些系统，保存后用列表里的「配置系统」维护。
+      </div>
     </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('lineModal')">取消</button>
       <button class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 产线配置系统弹窗（一对多） -->
+<div id="bindSystemModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-hd">
+      <h3>配置所属系统 — 平台产线</h3>
+      <span class="close-btn" onclick="closeModal('bindSystemModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="form-group">
+        <label>选择系统（可多选）</label>
+        <div style="border:1px solid #d9d9d9;border-radius:4px;padding:8px 12px;max-height:220px;overflow:auto;">
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-weight:normal;">
+            <input type="checkbox" checked> 数智工作台
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-weight:normal;">
+            <input type="checkbox" checked> 智能应用创编平台
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-weight:normal;">
+            <input type="checkbox" checked> 应用能力服务
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-weight:normal;">
+            <input type="checkbox"> AI算力中心
+            <span style="font-size:12px;color:rgba(0,0,0,.4);">已属「启明」</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-weight:normal;">
+            <input type="checkbox"> 教育数据指挥中心
+            <span style="font-size:12px;color:rgba(0,0,0,.4);">已属「启明」</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-weight:normal;">
+            <input type="checkbox"> 智能交互终端
+            <span style="font-size:12px;color:rgba(0,0,0,.4);">已属「大课堂」</span>
+          </label>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:#fffbe6;border:1px solid #ffe58f;border-radius:4px;font-size:12px;color:rgba(0,0,0,.65);">
+        ⚠️ 一个系统只能归属一条产线。勾选已属其他产线的系统，保存后将从原产线迁出。
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('bindSystemModal')">取消</button>
+      <button class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 供应商主数据弹窗 -->
+<div id="supplierMasterModal" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-hd">
+      <h3>供应商主数据</h3>
+      <span class="close-btn" onclick="closeModal('supplierMasterModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div style="margin-bottom:12px;">
+        <button class="btn btn-primary" onclick="showAddSupplier()">+ 新增供应商</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:28%;">供应商名称</th>
+            <th style="width:13%;">联系人</th>
+            <th style="width:15%;">联系电话</th>
+            <th style="width:22%;">联系邮箱</th>
+            <th style="width:9%;">关联设备</th>
+            <th style="width:13%;">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>华为技术有限公司</td>
+            <td>张经理</td>
+            <td>138****1234</td>
+            <td>zhang@huawei.com</td>
+            <td>12 台</td>
+            <td>
+              <button class="btn-link" onclick="showEditSupplier()">编辑</button>
+              <button class="btn-link">删除</button>
+            </td>
+          </tr>
+          <tr>
+            <td>科大讯飞股份有限公司</td>
+            <td>李总监</td>
+            <td>139****5678</td>
+            <td>li@iflytek.com</td>
+            <td>8 台</td>
+            <td>
+              <button class="btn-link" onclick="showEditSupplier()">编辑</button>
+              <button class="btn-link">删除</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:12px;padding:10px 12px;background:#fffbe6;border:1px solid #ffe58f;border-radius:4px;font-size:12px;color:rgba(0,0,0,.65);">
+        ⚠️ 已关联设备的供应商不可直接删除，需先解除设备关联。
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('supplierMasterModal')">关闭</button>
     </div>
   </div>
 </div>
@@ -1068,8 +1249,8 @@ tbody tr:hover { background: #fafafa; }
         </div>
       </div>
       <div class="form-group">
-        <label>地址</label>
-        <input type="text" placeholder="请输入供应商地址（选填）">
+        <label>联系邮箱</label>
+        <input type="email" placeholder="请输入联系邮箱（选填）">
       </div>
       <div class="form-group">
         <label>备注</label>
@@ -1078,6 +1259,37 @@ tbody tr:hover { background: #fafafa; }
     </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeModal('supplierModal')">取消</button>
+      <button class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 为设备指定供应商弹窗 -->
+<div id="assignSupplierModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-hd">
+      <h3>指定供应商</h3>
+      <span class="close-btn" onclick="closeModal('assignSupplierModal')">&times;</span>
+    </div>
+    <div class="modal-bd">
+      <div class="form-group">
+        <label>设备</label>
+        <input type="text" value="AI算力服务器（AI算力中心 / Atlas 800）" readonly style="background:#f5f5f5;">
+      </div>
+      <div class="form-group">
+        <label>供应商 <span style="color:#ff4d4f;">*</span></label>
+        <select>
+          <option value="">请选择</option>
+          <option value="1" selected>华为技术有限公司</option>
+          <option value="2">科大讯飞股份有限公司</option>
+        </select>
+      </div>
+      <div style="padding:10px 12px;background:#f6f8fa;border-radius:4px;font-size:12px;color:rgba(0,0,0,.6);">
+        写入 devices.supplier_id。联系人/电话/邮箱由供应商主数据带出，不在此处填写。供应商不在列表中时，先到「供应商主数据」新增。
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeModal('assignSupplierModal')">取消</button>
       <button class="btn btn-primary">保存</button>
     </div>
   </div>
@@ -1470,6 +1682,18 @@ function showAddLine() {
 
 function showEditLine() {
   openModal('lineModal');
+}
+
+function showBindSystem() {
+  openModal('bindSystemModal');
+}
+
+function showSupplierMaster() {
+  openModal('supplierMasterModal');
+}
+
+function showAssignSupplier() {
+  openModal('assignSupplierModal');
 }
 
 function showAddSupplier() {

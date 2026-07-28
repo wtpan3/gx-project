@@ -198,9 +198,9 @@
         <strong>批量导入字段范围:</strong> 除归属信息外，<strong>发货单号、安装位置、当前状态也支持导入</strong>——初次导入时若设备已到货/安装，可直接带入状态和相关信息，无需导入后逐条编辑。<br>
         <strong>设备状态（5个，统一）:</strong> 待发货 → 已到货 → 已安装 → 已调试 → 运行中。时间轴按这 5 态呈现，各节点日期来自 devices 表的 delivery_date/arrival_date/install_date/debug_date/accept_date 字段。<br>
         <strong>外采设备:</strong> 当设备来源=外部采购时，详情弹窗额外显示<strong>供应商 + 供应商联系人</strong>（姓名、电话）；库存发货时隐藏这两行。<br>
-        <strong>查看规格详情:</strong> 详情弹窗内"设备名称"旁的链接，可跳回该设备对应的<strong>字典规格模板</strong>，核对快照与最新规格是否一致。<br>
+        <strong>查看规格详情:</strong> 详情弹窗内"设备名称"旁显示品牌/型号/参数等规格信息（存储在 devices 表的 brand/model/params 字段）。<br>
         <strong>序列号:</strong> 列表页不展示，仅在<strong>详情弹窗</strong>内显示（批次序列号列表/范围）。<br>
-        <strong>产线关联（方案A）:</strong> 产线挂在字典层：device.system_id → device_systems.production_line_id → production_lines。筛选"产线"显示该产线下所有系统的设备。<br>
+        <strong>产线关联:</strong> devices 表直接关联 production_line_id → production_lines，筛选"产线"显示该产线下所有设备。<br>
         <strong>状态联动:</strong> WBS 任务完成自动同步设备状态（WBS→设备），手动改设备状态则提醒责任人更新 WBS（设备→WBS）。<br>
         <strong>工具区（右上角）:</strong> 批量导入（按学校）/ 批量更新状态 / 导出 三个按钮并排。"导出"点击后可选 Excel（正式报告）或 CSV（数据分析）格式。<br>
         <strong>V2.2 增强 (§6.4.5):</strong> ① 顶部统计卡片（设备总数 + 待发货/已到货/已安装/已调试/运行中，与首页硬件交付进度环形图一致，点击可筛选）② 多维分组视图 TAB（列表/按学校/按产线/按系统/按状态）③ 筛选第一行 5 项（项目名称/产线/系统名称/学校/当前状态）④ 分配学校支持"未分配"选项 ⑤ 序列号范围搜索（支持单号"SN12345"、数字范围"1-50"、混合范围"A001-A050"；输入单号如"40"→匹配"1-50"，"A030"→匹配"A001-A050"）。<br>

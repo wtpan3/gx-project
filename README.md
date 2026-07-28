@@ -107,7 +107,7 @@ cd frontend; $env:PATH="C:\Program Files\nodejs;$env:PATH"; $env:BROWSER='none';
 > 开发时以 CLAUDE.md / ddl.sql 为准，本处不再重复维护，避免两处不一致。
 
 涉及：devices.source/status、risks.status、software_modules.phase、
-wbs_tasks.status/priority、device_systems.type、todos.priority。
+wbs_tasks.status/priority、todos.priority。
 
 ### 菜单顺序（左侧导航栏）
 
@@ -185,7 +185,6 @@ DB_NAME=gx_project_dev
 |------|------|
 | users | 用户表 |
 | schools | 学校表 |
-| device_systems | 设备系统字典表 |
 | suppliers | 供应商表 |
 | templates | 模板表 |
 | dict_items | 数据字典表 |
@@ -194,7 +193,6 @@ DB_NAME=gx_project_dev
 | wbs_tasks | WBS任务表 |
 | devices | 设备信息表 |
 | trainings | 培训计划表 |
-| training_schools | 培训学校关联表 |
 | risks | 风险管理表 |
 | risk_tasks | 风险应对任务关联表 |
 | reports | 报告管理表 |
@@ -392,7 +390,6 @@ wbs_tasks(task_code/priority/responsible_person_id/status/parent_id)。
 **受影响字段清单**（已在2026-07-22修复）：
 | 表名 | 字段 | 原ENUM值(双重编码) | 修复后 |
 |------|------|-------------------|--------|
-| device_systems | type | 乱码hex c3a7... | '硬件','软件','其他' |
 | software_modules | phase | 乱码6个phase值 | '需求收集','需求确认','软件开发','软件测试','软件部署','上线运行' |
 | todos | priority | 乱码 | '高','中','低' |
 | todos | status | 乱码 | '待开始','进行中','已完成' |
@@ -438,7 +435,6 @@ docker exec -i gx_mysql mysql -uroot -pGX2026!root \
 - 结果：`'硬件'` 变成 `0xc3a7c2a1...` 乱码hex
 
 **历史血泪教训**（来自问题登记簿）:
-- P007: device_systems.type 双重编码
 - P008: software_modules.phase 双重编码
 - P009: todos.priority 双重编码
 - P010: todos.status 双重编码
@@ -462,27 +458,27 @@ CREATE TABLE todos (
 #### 3. 修改表结构时保持字符集一致
 
 ```sql
--- 修改ENUM前先检查表字符集
-SHOW CREATE TABLE device_systems;
+-- ✅ 修改ENUM前先检查表字符集
+SHOW CREATE TABLE software_modules;
 
--- 修改时保持字符集
-ALTER TABLE device_systems 
-  MODIFY type ENUM('硬件','软件','其他') 
+-- ✅ 修改时保持字符集
+ALTER TABLE software_modules 
+  MODIFY phase ENUM('需求收集','需求确认','软件开发','软件测试','软件部署','上线运行') 
   CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 **排查方法**（检查是否还有双重编码）：
 ```sql
 -- 查看ENUM定义,如果显示乱码/hex则有问题
-SHOW COLUMNS FROM device_systems LIKE 'type';
 SHOW COLUMNS FROM software_modules LIKE 'phase';
+SHOW COLUMNS FROM todos LIKE 'priority';
 
 -- 查看表字符集
-SHOW CREATE TABLE device_systems;
+SHOW CREATE TABLE software_modules;
 ```
 
 **历史问题记录**：
-- 2026-07-22: 4个表(device_systems/software_modules/todos.priority/todos.status)发生双重编码
+- 2026-07-22: 3个字段(software_modules.phase/todos.priority/todos.status)发生双重编码
 - 根因: 导入ddl.sql时未加 --default-character-set=utf8mb4
 - 修复: 逐表ALTER MODIFY重新定义ENUM
 - 预防: 本节规范写入README，强制执行

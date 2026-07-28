@@ -14,7 +14,6 @@ import {
   SettingOutlined,
   UserOutlined,
   BankOutlined,
-  DatabaseOutlined,
   ShopOutlined,
   AppstoreOutlined,
   FileZipOutlined,
@@ -46,7 +45,6 @@ const menuItems = [
     children: [
       { key: '/users', icon: <UserOutlined />, label: '用户管理' },
       { key: '/schools', icon: <BankOutlined />, label: '学校管理' },
-      { key: '/device-systems', icon: <DatabaseOutlined />, label: '设备字典' },
       { key: '/suppliers', icon: <ShopOutlined />, label: '供应商管理' },
       { key: '/production-lines', icon: <AppstoreOutlined />, label: '产线类型管理' },
       { key: '/templates', icon: <FileZipOutlined />, label: '模板管理' },
@@ -71,7 +69,6 @@ const pageTitleMap: Record<string, string> = {
   '/project-review': '项目复盘',
   '/users': '用户管理',
   '/schools': '学校管理',
-  '/device-systems': '设备字典',
   '/suppliers': '供应商管理',
   '/production-lines': '产线类型管理',
   '/templates': '模板管理',

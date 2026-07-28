@@ -97,8 +97,8 @@ tbody tr:hover { background: #fafafa; }
           <div class="tabs">
             <div class="tab active" onclick="switchTab('user')">用户管理</div>
             <div class="tab" onclick="switchTab('school')">学校管理</div>
-            <div class="tab" onclick="switchTab('device')">设备字典</div>
             <div class="tab" onclick="switchTab('supplier')">供应商管理</div>
+            <div class="tab" onclick="switchTab('line')">产线类型管理</div>
             <div class="tab" onclick="switchTab('template')">模板管理</div>
             <div class="tab" onclick="switchTab('dict')">数据字典</div>
             <div class="tab" onclick="switchTab('project')">项目信息</div>
@@ -274,126 +274,6 @@ tbody tr:hover { background: #fafafa; }
             </table>
           </div>
 
-          <!-- 设备字典 -->
-          <div id="deviceTab" class="tab-content hidden">
-            <div class="filters">
-              <div>
-                <label>项目名称</label>
-                <select>
-                  <option>全部</option>
-                  <option>高新区AI+教育项目</option>
-                </select>
-              </div>
-              <div>
-                <label>模块</label>
-                <select>
-                  <option>全部</option>
-                  <option>四所示范校</option>
-                  <option>常规设备服务采购</option>
-                </select>
-              </div>
-              <div>
-                <label>系统名称</label>
-                <select>
-                  <option>全部</option>
-                  <option>智慧体育</option>
-                  <option>AI英语听说教学</option>
-                </select>
-              </div>
-              <div>
-                <label>产线</label>
-                <select>
-                  <option>全部</option>
-                  <option>平台产线</option>
-                  <option>科创教育</option>
-                  <option>体育产品线</option>
-                  <option>三方外采</option>
-                </select>
-              </div>
-              <div>
-                <label>建设年份</label>
-                <select>
-                  <option>全部</option>
-                  <option>2026</option>
-                  <option>2027</option>
-                  <option>2028</option>
-                </select>
-              </div>
-              <div>
-                <label>设备类型</label>
-                <select>
-                  <option>全部</option>
-                  <option>硬件</option>
-                  <option>软件</option>
-                </select>
-              </div>
-              <button class="btn btn-primary">查询</button>
-              <button class="btn">重置</button>
-            </div>
-            <div style="margin-bottom: 16px;">
-              <button class="btn btn-primary" onclick="showAddDevice()">+ 新增设备</button>
-              <button class="btn">批量导入</button>
-              <button class="btn">导出Excel</button>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:7%;">项目名称</th>
-                  <th style="width:9%;">模块</th>
-                  <th style="width:9%;">系统名称</th>
-                  <th style="width:11%;">设备名称</th>
-                  <th style="width:7%;">产线</th>
-                  <th style="width:6%;">品牌</th>
-                  <th style="width:7%;">型号</th>
-                  <th style="width:6%;">设备类型</th>
-                  <th style="width:7%;">采购类型</th>
-                  <th style="width:5%;">年份</th>
-                  <th style="width:5%;">单位</th>
-                  <th style="width:6%;">计划数量</th>
-                  <th style="width:15%;">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td title="高新区AI+教育项目">高新区AI+...</td>
-                  <td>四所示范校</td>
-                  <td>智慧体育</td>
-                  <td>体育运动监测手环</td>
-                  <td>体育产品线</td>
-                  <td>华为</td>
-                  <td>Band 7</td>
-                  <td>硬件</td>
-                  <td>外部采购</td>
-                  <td>2026</td>
-                  <td>个</td>
-                  <td>500</td>
-                  <td>
-                    <button class="btn-link" onclick="showEditDevice()">编辑</button>
-                    <button class="btn-link">删除</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td title="高新区AI+教育项目">高新区AI+...</td>
-                  <td>常规设备服务采购</td>
-                  <td>AI英语听说教学</td>
-                  <td>听说考试专用耳机</td>
-                  <td>平台产线</td>
-                  <td>科大讯飞</td>
-                  <td>iFLYTEK H1</td>
-                  <td>硬件</td>
-                  <td>库存发货</td>
-                  <td>2026</td>
-                  <td>个</td>
-                  <td>300</td>
-                  <td>
-                    <button class="btn-link" onclick="showEditDevice()">编辑</button>
-                    <button class="btn-link">删除</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
           <!-- 供应商管理 -->
           <div id="supplierTab" class="tab-content hidden">
             <div class="filters">
@@ -440,6 +320,76 @@ tbody tr:hover { background: #fafafa; }
                   <td>
                     <button class="btn-link" onclick="showEditSupplier()">编辑</button>
                     <button class="btn-link">删除</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 产线类型管理 -->
+          <div id="lineTab" class="tab-content hidden">
+            <div class="filters">
+              <div>
+                <label>产线名称</label>
+                <input type="text" placeholder="请输入产线名称">
+              </div>
+              <div>
+                <label>状态</label>
+                <select>
+                  <option>全部</option>
+                  <option>启用</option>
+                  <option>停用</option>
+                </select>
+              </div>
+              <button class="btn btn-primary">查询</button>
+              <button class="btn">重置</button>
+            </div>
+            <div style="margin-bottom: 16px;">
+              <button class="btn btn-primary" onclick="showAddLine()">+ 新增产线</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:12%;">产线编码</th>
+                  <th style="width:18%;">产线名称</th>
+                  <th style="width:34%;">说明</th>
+                  <th style="width:10%;">状态</th>
+                  <th style="width:14%;">创建时间</th>
+                  <th style="width:12%;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>PL-PLATFORM</td>
+                  <td>平台产线</td>
+                  <td>教育平台类软硬件交付</td>
+                  <td><span class="tag enabled">启用</span></td>
+                  <td>2026-07-01</td>
+                  <td>
+                    <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link">停用</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>PL-SPORTS</td>
+                  <td>体育产品线</td>
+                  <td>智慧体育相关设备与系统</td>
+                  <td><span class="tag enabled">启用</span></td>
+                  <td>2026-07-01</td>
+                  <td>
+                    <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link">停用</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>PL-STEAM</td>
+                  <td>科创教育</td>
+                  <td>创客/STEAM 实验室类交付</td>
+                  <td><span class="tag disabled">停用</span></td>
+                  <td>2026-07-01</td>
+                  <td>
+                    <button class="btn-link" onclick="showEditLine()">编辑</button>
+                    <button class="btn-link">启用</button>
                   </td>
                 </tr>
               </tbody>
@@ -1058,117 +1008,38 @@ tbody tr:hover { background: #fafafa; }
   </div>
 </div>
 
-<!-- 新增/编辑设备字典弹窗 -->
-<div id="deviceModal" class="modal">
-  <div class="modal-content" style="max-width: 900px;">
+<!-- 新增/编辑产线弹窗 -->
+<div id="lineModal" class="modal">
+  <div class="modal-content">
     <div class="modal-hd">
-      <h3>新增设备</h3>
-      <span class="close-btn" onclick="closeModal('deviceModal')">&times;</span>
+      <h3>新增产线</h3>
+      <span class="close-btn" onclick="closeModal('lineModal')">&times;</span>
     </div>
     <div class="modal-bd">
       <div class="form-row">
         <div class="form-group">
-          <label>项目名称 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="">请选择</option>
-            <option value="gx-ai-edu">高新区AI+教育项目</option>
-          </select>
+          <label>产线编码 <span style="color:#ff4d4f;">*</span></label>
+          <input type="text" placeholder="如 PL-PLATFORM（唯一）">
         </div>
         <div class="form-group">
-          <label>模块 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="">请选择</option>
-            <option value="demo-schools">四所示范校</option>
-            <option value="regular">常规设备服务采购</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>系统名称 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="">请选择</option>
-            <option value="smart-sports">智慧体育</option>
-            <option value="ai-english">AI英语听说教学</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>设备名称 <span style="color:#ff4d4f;">*</span></label>
-          <input type="text" placeholder="请输入设备名称">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>产线</label>
-          <select>
-            <option value="">请选择</option>
-            <option value="platform">平台产线</option>
-            <option value="sci-edu">科创教育</option>
-            <option value="sports">体育产品线</option>
-            <option value="third-party">三方外采</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>设备类型 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="">请选择</option>
-            <option value="hardware">硬件</option>
-            <option value="software">软件</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>品牌</label>
-          <input type="text" placeholder="请输入品牌（可填待补）">
-        </div>
-        <div class="form-group">
-          <label>型号</label>
-          <input type="text" placeholder="请输入型号（可填待补）">
+          <label>产线名称 <span style="color:#ff4d4f;">*</span></label>
+          <input type="text" placeholder="请输入产线名称">
         </div>
       </div>
       <div class="form-group">
-        <label>参数</label>
-        <textarea placeholder="请输入技术参数说明（可填待补）" rows="2"></textarea>
+        <label>说明</label>
+        <textarea placeholder="请输入产线说明（选填）" rows="3"></textarea>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>采购类型 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="">请选择</option>
-            <option value="stock">库存发货</option>
-            <option value="purchase">外部采购</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>建设年份 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="2026" selected>2026</option>
-            <option value="2027">2027</option>
-            <option value="2028">2028</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>单位 <span style="color:#ff4d4f;">*</span></label>
-          <select>
-            <option value="">请选择</option>
-            <option value="台">台</option>
-            <option value="套">套</option>
-            <option value="个">个</option>
-            <option value="块">块</option>
-            <option value="张">张</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>计划数量 <span style="color:#ff4d4f;">*</span></label>
-          <input type="number" placeholder="请输入计划数量" min="1">
-        </div>
+      <div class="form-group">
+        <label>状态</label>
+        <select>
+          <option value="1" selected>启用</option>
+          <option value="0">停用</option>
+        </select>
       </div>
     </div>
     <div class="modal-ft">
-      <button class="btn" onclick="closeModal('deviceModal')">取消</button>
+      <button class="btn" onclick="closeModal('lineModal')">取消</button>
       <button class="btn btn-primary">保存</button>
     </div>
   </div>
@@ -1434,8 +1305,8 @@ function switchTab(tabName) {
   const tabMap = {
     'user': 'userTab',
     'school': 'schoolTab',
-    'device': 'deviceTab',
     'supplier': 'supplierTab',
+    'line': 'lineTab',
     'template': 'templateTab',
     'dict': 'dictTab',
     'project': 'projectTab',
@@ -1593,12 +1464,12 @@ function showEditSchool() {
   openModal('schoolModal');
 }
 
-function showAddDevice() {
-  openModal('deviceModal');
+function showAddLine() {
+  openModal('lineModal');
 }
 
-function showEditDevice() {
-  openModal('deviceModal');
+function showEditLine() {
+  openModal('lineModal');
 }
 
 function showAddSupplier() {

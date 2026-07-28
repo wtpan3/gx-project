@@ -205,11 +205,11 @@ const Dashboard: React.FC = () => {
     const routeMap: Record<string, string> = {
       '覆盖学校': '/schools',
       '重点学校': '/schools?filter=key',
-      '系统总数': '/device-systems',
-      '设备类型': '/devices',
+      '系统总数': '/device-info?groupBy=system',
+      '设备类型': '/device-info',
       '产线类型': '/production-lines',
-      '外采设备': '/devices?filter=external',
-      '硬件总数': '/devices'
+      '外采设备': '/device-info?filter=external',
+      '硬件总数': '/device-info'
     };
     const route = routeMap[label];
     if (route) {

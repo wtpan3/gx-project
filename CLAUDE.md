@@ -56,23 +56,26 @@
 | schools.project_status | 未启动, 实施中, 试运行, 已验收, 维保中 |
 | wbs_tasks.status | 待开始, 进行中, 已完成, 已延期, 待补材料 |
 | wbs_tasks.priority | 高, 中, 低 |
+| wbs_tasks.material_status | 无要求, 待上传, 部分上传, 已完成 |
 | risks.status | 已识别, 应对中, 已关闭 |
 | devices.source | 三方外采, 库存设备 |
 | devices.status | 待发货, 已到货, 已安装, 已调试, 运行中 |
+| devices.type | 硬件, 软件, 其他 |
 | software_modules.phase | 需求收集,需求确认,软件开发,软件测试,软件部署,上线运行 |
-| device_systems.type | 硬件, 软件, 其他 |
+| templates.status | 启用, 停用 |
+| template_wbs_stages.level | L1, L2, L3 |
 | todos.priority | 高, 中, 低 |
 
 ## 易错字段名（以 ddl.sql / 模型为准）
-- schools：full_name(非name)、region(非district)、campus_manager_id(非principal)、is_key
-- risks：risk_desc(非description)、impact_description(非impact)、response_strategy(非response_plan)、responsible_person_id(非owner_id)
-  - ⚠️ 风险轻量模型：**已删除 probability/impact/response_deadline**，**新增 progress_note**。勿用已删字段。现存字段：risk_desc/trigger_condition/impact_description/risk_level/response_strategy/progress_note/responsible_person_id/status/school_id
-- wbs_tasks：task_code(唯一)、responsible_person_id(非assignee_id)、work_content_l4(L4统计口径)、parent_id(层级父子，前端树形依赖)
-- devices 字段三分类（改设备信息时必读）：
-  - 规格快照·只读：品牌/型号/参数(params)/类型(type)/单位(unit)——从 device_systems 字典复制快照，不可改
-  - 系统生成·只读：建设年份(construction_year)——从字典带入
-  - 用户可填：归属(school_id等)/交付执行(各阶段日期/status)/关联定位字段
-- 外键：responsible_person_id/assignee_id→users.id，school_id→schools.id
+- schools：full_name(非name)、region(非district)、campus_manager_id(非principal)、is_key、**project_id**
+- risks：risk_desc(非description)、impact_description(非impact)、response_strategy(非response_plan)、responsible_person_id(非owner_id)、**project_id**
+  - ⚠️ 风险轻量模型：**已删除 probability/impact/response_deadline**，**新增 progress_note**。勿用已删字段。现存字段：risk_desc/trigger_condition/impact_description/risk_level/response_strategy/progress_note/responsible_person_id/status/school_id/**project_id**
+- wbs_tasks：task_code(唯一)、responsible_person_id(非assignee_id)、work_content_l4(L4统计口径)、parent_id(层级父子，前端树形依赖)、**project_id**、**requires_material**、**material_status**
+- devices：**project_id**、system_name(非system_id)、type(硬件/软件/其他)、source(三方外采/库存设备)
+- templates：**重大变更（2026-07-28）**— 删除stage字段，新增project_id/template_key/file_name/file_size/file_type/upload_by/download_count/is_latest/is_deleted；type从ENUM改为VARCHAR(50)从字典读；关联WBS改用template_wbs_stages表
+- template_wbs_stages：**新表**— template_id/level(L1/L2/L3)/stage_value/is_required
+- files：**project_id**、**wbs_task_id**、**template_id**（后两者支持材料卡点机制）
+- 外键：responsible_person_id/assignee_id→users.id，school_id→schools.id，**project_id→project_info.id**
 - 前端责任人显示 assignee_name（由 responsible_person_id JOIN users 查出），数据库无 assignee_name 列
 - JWT 的 sub 字段用 user.id（不是 username）
 

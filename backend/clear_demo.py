@@ -21,7 +21,7 @@ cursor = conn.cursor()
 try:
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
     tables = ['risks', 'wbs_tasks', 'devices', 'software_modules',
-              'production_lines', 'device_systems', 'schools']
+              'production_lines', 'schools']
     for table in tables:
         cursor.execute(f"TRUNCATE TABLE {table}")
         print(f"[OK] 已清空 {table}")

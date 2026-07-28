@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 
 from app.models.school import School
-from app.models.device_system import DeviceSystem
 from app.models.device import Device
 from app.models.wbs_task import WbsTask
 from app.models.risk import Risk
@@ -36,7 +35,8 @@ class DashboardService:
         """7个顶部卡片统计"""
         total_schools = db.query(School).count()
         priority_schools = db.query(School).filter(School.is_key == True).count()
-        total_systems = db.query(DeviceSystem).count()
+        # 统计系统数（按system_name去重统计）
+        total_systems = db.query(Device.system_name).filter(Device.system_name.isnot(None)).distinct().count()
         device_types_count = db.query(func.count(func.distinct(Device.device_name))).scalar() or 0
         production_lines_count = db.query(ProductionLine).filter(ProductionLine.is_enabled == 1).count()
         external_devices_count = db.query(func.count(func.distinct(Device.device_name))).filter(

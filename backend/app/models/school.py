@@ -13,7 +13,7 @@ class School(Base):
     campus_manager_id = Column(Integer, ForeignKey('users.id'))
     contact_person = Column(String(50))
     contact_phone = Column(String(20))
-    project_status = Column(Enum('未启动', '实施中', '已完成', '已验收', '维护中'))
+    project_status = Column(Enum('未启动', '实施中', '试运行', '已验收', '维保中'))
     remark = Column(Text)
     is_key = Column(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())

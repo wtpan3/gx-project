@@ -53,6 +53,7 @@
 ## 数据库枚举值（权威=ddl.sql，禁止猜）
 | 字段 | 枚举值 |
 |------|--------|
+| schools.project_status | 未启动, 实施中, 试运行, 已验收, 维保中 |
 | wbs_tasks.status | 待开始, 进行中, 已完成, 已延期, 待补材料 |
 | wbs_tasks.priority | 高, 中, 低 |
 | risks.status | 已识别, 应对中, 已关闭 |

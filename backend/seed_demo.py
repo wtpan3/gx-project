@@ -6,7 +6,6 @@ from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models.school import School
-from app.models.device_system import DeviceSystem
 from app.models.device import Device
 from app.models.wbs_task import WBSTask
 from app.models.risk import Risk
@@ -59,46 +58,28 @@ def seed_demo_data():
             schools.append(s)
         db.flush()
 
-        # 2. 设备系统(6个)
-        systems_data = [
-            ('数智工作台', '软件'), ('教育数据指挥中心', '软件'), ('智能应用创编平台', '软件'),
-            ('应用能力服务', '软件'), ('AI算力中心', '硬件'), ('智能交互终端', '硬件')
-        ]
-        systems = []
-        for sys_name, type_ in systems_data:
-            s = DeviceSystem(
-                project_name='高新区AI+教育项目',
-                construction_year=2024,
-                system_name=sys_name,
-                device_name=sys_name,
-                brand='标准',
-                model='V1.0',
-                type=type_,
-                unit='套',
-                plan_quantity=1
-            )
-            db.add(s)
-            systems.append(s)
-        db.flush()
+        # 2. 设备系统字典已删除，不再插入
 
-        print(f"[OK] 插入 {len(schools)} 所学校, {len(systems)} 个系统")
+        print(f"[OK] 插入 {len(schools)} 所学校")
 
         # 3. 设备(1240台,分布到各学校)
         devices = []
         device_types = ['服务器', 'GPU卡', '交换机', '智能黑板', 'VR设备', '机器人', '摄像头', '传感器']
+        system_names = ['数智工作台', '教育数据指挥中心', '智能应用创编平台', '应用能力服务', 'AI算力中心', '智能交互终端']
+
         for i in range(1240):
             d = Device(
                 project_name='高新区AI+教育项目',
+                construction_year=2024,
+                system_name=system_names[i % len(system_names)],
                 device_name=f'{device_types[i % len(device_types)]}-{i+1}',
                 brand='标准品牌',
                 model=f'型号{i+1}',
                 unit='台',
-                system_id=systems[i % len(systems)].id,
                 school_id=schools[i % len(schools)].id,
                 status=['待发货', '已到货', '已安装', '已调试', '运行中'][i % 5],
                 source='三方外采' if i % 3 == 0 else '库存设备',
                 quantity=1,
-                construction_year=2024,
                 type='硬件',
                 plan_arrival_date=today - timedelta(days=30)
             )

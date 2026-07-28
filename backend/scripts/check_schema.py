@@ -27,7 +27,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from app.models import (
-    Device, DeviceSystem, SoftwareModule, School,
+    Device, SoftwareModule, School,
     WBSTask, Risk, Document, Todo, User
 )
 
@@ -54,7 +54,7 @@ class SchemaChecker:
 
         # 需要检查的模型列表
         self.models = [
-            Device, DeviceSystem, SoftwareModule, School,
+            Device, SoftwareModule, School,
             WBSTask, Risk, Document, Todo, User
         ]
 

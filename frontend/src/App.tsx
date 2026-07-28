@@ -37,7 +37,6 @@ function App() {
           {/* 系统管理模块 */}
           <Route path="/users" element={<UserManagement />} />
           <Route path="/schools" element={<Placeholder />} />
-          <Route path="/device-systems" element={<Placeholder />} />
           <Route path="/suppliers" element={<Placeholder />} />
           <Route path="/production-lines" element={<Placeholder />} />
           <Route path="/templates" element={<Placeholder />} />

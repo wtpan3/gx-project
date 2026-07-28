@@ -47,28 +47,7 @@ CREATE TABLE schools (
 ) COMMENT='学校表';
 
 -- ============================================================
--- 3. device_systems - 设备系统字典表
--- ============================================================
-CREATE TABLE device_systems (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    project_name VARCHAR(100) NOT NULL COMMENT '项目名称',
-    construction_year INT NOT NULL COMMENT '建设年份',
-    system_name VARCHAR(100) NOT NULL COMMENT '系统名称',
-    device_name VARCHAR(100) NOT NULL COMMENT '设备名称',
-    brand VARCHAR(100) NOT NULL COMMENT '品牌',
-    model VARCHAR(100) NOT NULL COMMENT '型号',
-    params TEXT COMMENT '技术参数',
-    type ENUM('硬件','软件','其他') NOT NULL COMMENT '设备类型',
-    unit VARCHAR(20) NOT NULL COMMENT '单位',
-    plan_quantity INT NOT NULL COMMENT '计划数量',
-    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用(软删除)',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uk_project_system_device_year (project_name, system_name, device_name, construction_year)
-) COMMENT='设备系统字典表';
-
--- ============================================================
--- 4. suppliers - 供应商表
+-- 3. suppliers - 供应商表
 -- ============================================================
 CREATE TABLE suppliers (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -164,7 +143,7 @@ CREATE TABLE devices (
     id INT PRIMARY KEY AUTO_INCREMENT,
     project_name VARCHAR(100) NOT NULL COMMENT '项目名称',
     construction_year INT NOT NULL COMMENT '建设年份',
-    system_id INT NOT NULL COMMENT '系统ID',
+    system_name VARCHAR(100) COMMENT '系统名称',
     device_name VARCHAR(100) NOT NULL COMMENT '设备名称',
     brand VARCHAR(100) NOT NULL COMMENT '品牌',
     model VARCHAR(100) NOT NULL COMMENT '型号',
@@ -187,7 +166,6 @@ CREATE TABLE devices (
     remark TEXT COMMENT '备注',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (system_id) REFERENCES device_systems(id),
     FOREIGN KEY (school_id) REFERENCES schools(id),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL
 ) COMMENT='设备信息表';

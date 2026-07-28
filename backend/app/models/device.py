@@ -8,7 +8,7 @@ class Device(Base):
     id = Column(Integer, primary_key=True, index=True)
     project_name = Column(String(100))
     construction_year = Column(Integer)
-    system_id = Column(Integer, ForeignKey('device_systems.id'))
+    system_name = Column(String(100))
     device_name = Column(String(100))
     brand = Column(String(100))
     model = Column(String(100))

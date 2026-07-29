@@ -1,16 +1,13 @@
 {
-  "last_updated": "2026-07-28T23:55:00",
-  "session_type": "数据库迁移+文档同步",
-  "current_focus": "产线↔系统数据库层对应关系落地：新建systems表，devices.system_id外键，9产线21系统",
+  "last_updated": "2026-07-29T18:45:00",
+  "session_type": "项目结构整理与文档同步",
+  "current_focus": "历史脚本归档、测试产物忽略规则、文档引用路径修正",
   "completed_this_session": [
-    "数据库迁移(backend/scripts/migrate_systems_table.py, 单事务)：新建systems表(project_id/name/production_line_id/description/sort_order/is_enabled, 唯一键project_id+name, utf8mb4)",
-    "production_lines：删除seed_demo演示3条(PL001智能制造/PL002软件开发/PL003内容制作, 已备份backend/scripts/backup_production_lines.json)，写入9条真实产品线",
-    "systems：写入21个系统并按用户给定权威清单归属到9条产线",
-    "devices：新增system_id列(FK→systems ON DELETE SET NULL + idx_system索引)，按system_name回填828条，system_name文本列保留兼容",
-    "后端代码：新建app/models/system.py；device.py加system_id；dashboard_service.py「系统总数」口径由COUNT(DISTINCT system_name)=6改为systems表计数=21",
-    "ddl.sql：表数19张/V2.2，新增systems建表语句+devices.system_id+末尾ALTER补FK(建表顺序所致)，追加9产线/21系统种子数据",
-    "文档同步6份：需求文档V2.3(§6.11.3重写9产线21系统映射表+术语表)、数据库设计.md(§4.3.1a systems新章+FK清单+devices字段)、详细设计开发文档.md(数据模型表+Dashboard卡片口径+设备字段表+数据字典说明)、功能增强开发排期V2.2(8条产线作废改9条)、README.md(表清单+systems DDL+新增「产线→系统→设备层级规则」业务规则章)、项目CLAUDE.md(易错字段名+业务规则摘要)",
-    "验证：迁移事务成功；新DDL+种子在临时库gx_sys_test验证9产线21系统分组正确后删库；FastAPI加载42路由；Dashboard卡片系统总数21/产线类型9；前端零system_name引用；npm run build → Compiled successfully"
+    "文档路径修正3处：①README.md删除学校看板/培训管理菜单、路由表、待开发列表（已整合进交付进展） ②README.md删除空的00-环境配置目录项（开发环境说明.md已并入本地启动手册） ③CLAUDE.md铁律#1业务规则引用改为docs/02-架构设计/业务规则说明.md",
+    "历史脚本归档：移动24个已执行完成的一次性脚本到ai_workspace/scripts_archive/（备份4个、迁移11个、检查10个），保留4个可复用工具（check_schema.py/verify_model_db_sync.py/export_ddl_from_db.py/import_milestone_hierarchy.py）",
+    "测试产物忽略：.gitignore新增frontend/e2e-report/、frontend/test-results/、frontend/playwright-report/（13MB测试产物，每次跑都重新生成）",
+    "归档说明文档：新增ai_workspace/scripts_archive/README.md，按用途分类24个脚本（备份/迁移/检查/修复），标注状态与损坏情况",
+    "git提交4个：①修复8处文档与代码不一致（77da248） ②修正CLAUDE.md业务规则引用（e9ac8f3） ③文档体系整理与ddl.sql同步（79926d9） ④归档历史脚本（3ef9f13）"
   ],
   "completed_modules": [
     "用户认证(JWT)",
@@ -64,21 +61,14 @@
     "wbs_tasks 表无 is_deleted 列（物理删除），删除不可逆，只能靠备份文件回滚",
     "前端 dev server 在测试期间曾自行退出导致整轮测试 goto 超时；npm run test:e2e 接管道(| tail)会使输出全缓冲、进程被杀时落盘为空，排查时改用 npx playwright test --reporter=line 直接落盘"
   ],
-  "next_context": "本会话把上次列入pending的产线↔系统数据库迁移做完了：systems表已建(21个系统)、production_lines换成9条真实产品线(demo 3条已备份删除)、devices加system_id外键并回填828条。层级链路 产线→系统→设备 现已可两跳查询。用户本次3个关键决策：①产线↔系统对应关系以用户本次口述清单为准，覆盖原型里的旧4产线版本(启明作废，教育数据指挥中心从启明移到平台产品线) ②「AI算力中心」「智能交互终端」不是真实系统，不建字典项 ③走方案A——保留那412条设备行不删，system_id留NULL，等设备清单重新维护时再逐条归属(用户原话：设备清单还要重新维护，设备到底属于哪个系统后面还要维护)。代码+ddl.sql+6份文档已同步，state.json已更新，git commit待执行(push需单独确认)。下一步可选：①给systems建后端API+前端管理界面(目前字典只能改库) ②设备表单改为选系统落system_id、产线由系统带出 ③修 project-plan.spec.ts:63 日期倒挂用例(先看trace确认DatePicker输入是否落值)。注意ddl.sql有既有建表顺序缺陷(schools引用后面才建的project_info)，已确认非本次引入，未修。",
+  "next_context": "本会话完成项目结构整理：①文档引用路径修正3处（README菜单/路由/目录，CLAUDE.md业务规则引用） ②归档24个历史脚本到ai_workspace/scripts_archive/（保留4个可复用工具在backend/scripts/） ③.gitignore新增测试产物忽略规则 ④4个git提交已push。项目现在干净：backend/scripts/仅剩4个有用工具，测试产物不再入库，文档引用全部有效。下次会话优先项：①修复project-plan.spec.ts:63日期倒挂用例（先看trace确认DatePicker输入是否落值） ②给systems建后端API+前端管理界面（目前字典只能改库） ③设备表单改为选系统落system_id、产线由系统带出。注意ddl.sql有既有建表顺序缺陷(schools引用后面才建的project_info)，已确认非本次引入，未修。",
   "modified_files": [
-    "backend/scripts/migrate_systems_table.py (新建·迁移脚本)",
-    "backend/scripts/backup_production_lines.json (新建·demo产线备份)",
-    "backend/app/models/system.py (新建)",
-    "backend/app/models/device.py (加system_id)",
-    "backend/app/services/dashboard_service.py (系统总数改按systems表统计)",
-    "ddl.sql (systems建表+devices.system_id+FK+9产线21系统种子)",
-    "docs/01-需求文档/需求文档-GX教育项目交付管理系统V2.3.md (§6.11.3+术语表)",
-    "docs/02-架构设计/数据库设计.md (§4.3.1a systems+FK清单+devices字段)",
-    "docs/02-架构设计/详细设计开发文档.md (数据模型表+卡片口径+§12.3设备字段+数据字典说明)",
-    "docs/01-需求文档/功能增强开发排期V2.2.md (8条产线作废改9条)",
-    "README.md (表清单+systems DDL+产线→系统→设备业务规则章)",
-    "CLAUDE.md (易错字段名+业务规则摘要)",
+    "README.md (删菜单/路由/目录项，修复3处不一致)",
+    "CLAUDE.md (铁律#1业务规则引用路径)",
+    ".gitignore (新增测试产物忽略)",
+    "backend/scripts/ (删除24个历史脚本)",
+    "ai_workspace/scripts_archive/ (归档24个脚本+README.md)",
     "state.json"
   ],
-  "last_decision": "系统提升为独立实体(systems表)承载产线归属，devices.system_id为权威归属字段、system_name降级为兼容文本；产线↔系统关系存于数据库数据、运行期可维护而非代码写死。「AI算力中心」「智能交互终端」经用户确认非真实系统不建字典项，其412条设备按用户选定的方案A保留行、system_id留NULL，待设备清单重新维护时补齐(不做物理删除，避免不可逆丢数据及WBS孤儿任务)。"
+  "last_decision": "历史脚本全部归档而非删除（ai_workspace/scripts_archive/），便于以后参考改写；测试产物(e2e-report/test-results 13MB)不入库，每次跑都重新生成；保留4个可复用工具在backend/scripts/供日常使用（schema检查、ddl导出、里程碑导入、模型同步验证）。"
 }

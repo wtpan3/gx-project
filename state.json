@@ -1,15 +1,16 @@
 {
-  "last_updated": "2026-07-28T22:40:00",
-  "session_type": "文档同步",
-  "current_focus": "原型与需求文档同步：学校去状态维护、供应商改设备主体、产线-系统一对多",
+  "last_updated": "2026-07-28T23:55:00",
+  "session_type": "数据库迁移+文档同步",
+  "current_focus": "产线↔系统数据库层对应关系落地：新建systems表，devices.system_id外键，9产线21系统",
   "completed_this_session": [
-    "系统管理原型：学校管理去掉当前状态（筛选/表格列/弹窗字段），弹窗改为维护is_key重点学校",
-    "系统管理原型：供应商管理改为以设备为主体（设备名称/系统/型号/来源/供应商/联系人/电话），新增供应商主数据弹窗+指定供应商弹窗（单台/批量）",
-    "系统管理原型：产线类型管理新增所属系统列（一对多标签展示）+配置系统多选弹窗（标注系统当前归属产线）",
-    "设备信息原型：系统名称下拉/按系统分组/详情弹窗统一为库内6个真实系统名，与产线Tab同源",
-    "设备信息原型：修正产线关联描述（设备不直接存产线，产线→系统→设备两跳），清理已删device_systems的规格字典引用",
-    "需求文档：4.2学校去project_status必填改is_key、4.3设备字典标废弃、4.4供应商重写为设备主体、新增4.10产线类型管理、修正3.1总览/十数据关联/十二数据库草案共18处设备字典残留",
-    "Playwright验证11个Tab单显、表头单元格数一致、3个新弹窗可开、0 JS错误"
+    "数据库迁移(backend/scripts/migrate_systems_table.py, 单事务)：新建systems表(project_id/name/production_line_id/description/sort_order/is_enabled, 唯一键project_id+name, utf8mb4)",
+    "production_lines：删除seed_demo演示3条(PL001智能制造/PL002软件开发/PL003内容制作, 已备份backend/scripts/backup_production_lines.json)，写入9条真实产品线",
+    "systems：写入21个系统并按用户给定权威清单归属到9条产线",
+    "devices：新增system_id列(FK→systems ON DELETE SET NULL + idx_system索引)，按system_name回填828条，system_name文本列保留兼容",
+    "后端代码：新建app/models/system.py；device.py加system_id；dashboard_service.py「系统总数」口径由COUNT(DISTINCT system_name)=6改为systems表计数=21",
+    "ddl.sql：表数19张/V2.2，新增systems建表语句+devices.system_id+末尾ALTER补FK(建表顺序所致)，追加9产线/21系统种子数据",
+    "文档同步6份：需求文档V2.3(§6.11.3重写9产线21系统映射表+术语表)、数据库设计.md(§4.3.1a systems新章+FK清单+devices字段)、详细设计开发文档.md(数据模型表+Dashboard卡片口径+设备字段表+数据字典说明)、功能增强开发排期V2.2(8条产线作废改9条)、README.md(表清单+systems DDL+新增「产线→系统→设备层级规则」业务规则章)、项目CLAUDE.md(易错字段名+业务规则摘要)",
+    "验证：迁移事务成功；新DDL+种子在临时库gx_sys_test验证9产线21系统分组正确后删库；FastAPI加载42路由；Dashboard卡片系统总数21/产线类型9；前端零system_name引用；npm run build → Compiled successfully"
   ],
   "completed_modules": [
     "用户认证(JWT)",
@@ -25,13 +26,15 @@
     "学校状态枚举统一(Model与DDL对齐为旧5态)",
     "数据库架构优化：删除device_systems表，devices表独立管理，代码+文档+原型+前端菜单全部同步完成",
     "Playwright E2E 框架落地(配置+7用例+npm脚本+文档，6/7通过)",
-    "wbs_tasks 测试数据清理与日期脏数据修复(64行正式数据，0倒挂0孤儿)"
+    "wbs_tasks 测试数据清理与日期脏数据修复(64行正式数据，0倒挂0孤儿)",
+    "产线↔系统数据库层对应关系(systems表+devices.system_id, 9产线21系统, 代码+ddl+6份文档已同步)"
   ],
   "in_progress": [],
   "pending": [
-    "【本次新增·前置】新建systems表(id/project_id/name/production_line_id/sort_order/is_enabled)，将devices.system_name的6个值归集为字典行并分配产线",
-    "【本次新增·前置】devices.system_name(文本)迁移为system_id外键，回填1240条存量设备",
-    "【本次新增】production_lines替换seed_demo演示数据(智能制造/软件开发/内容制作产线)为真实产线清单(平台产线/启明/大课堂/科创教育等)",
+    "【最优先·数据】412条设备system_id为NULL待归属（原system_name为「AI算力中心」「智能交互终端」，用户确认这两个系统不存在故未建字典项）—— 用户已明确设备清单要重新维护，届时逐条指定所属系统",
+    "【本次新增】systems表尚无后端API与前端管理界面（当前仅数据库+模型层，字典维护只能改库）；原型「产线类型管理」Tab已就绪可对接",
+    "【本次新增】devices新增/编辑表单需改为选systems落system_id，产线字段改为由系统自动带出只读（详细设计开发文档§12.3已按此更新，前端未实现）",
+    "【本次新增】ddl.sql存在既有建表顺序缺陷：schools(#2)引用project_info(#7)，整文件无法从零建库(1824错误)。已验证HEAD版本同样失败，非本次引入，未擅自修（按单任务边界）",
     "【本次新增】schools.project_status字段保留但已无维护入口，需确认由WBS进度自动推导的实现方案（关联known_issues环形图6态vs字段5态不一致）",
     "【本次新增】devices.supplier_id当前1240台全为空，需补供应商指定数据",
     "【最优先】修复 project-plan.spec.ts:63 日期倒挂用例（6/7中唯一失败）",
@@ -61,12 +64,21 @@
     "wbs_tasks 表无 is_deleted 列（物理删除），删除不可逆，只能靠备份文件回滚",
     "前端 dev server 在测试期间曾自行退出导致整轮测试 goto 超时；npm run test:e2e 接管道(| tail)会使输出全缓冲、进程被杀时落盘为空，排查时改用 npx playwright test --reporter=line 直接落盘"
   ],
-  "next_context": "本会话完成两件事：①device_systems文档引用清理(commit 3c774d5) ②系统管理原型去设备字典+补产线类型管理Tab，并顺带修掉前端3处device_systems残留和Dashboard里4处指向不存在路由的设备下钻(原/devices和/device-systems都无路由，统一改为/device-info)。已跑tsc+build+Playwright三重验证通过。用户本次决策：原型的AI配置/微信对话/问答机器人三个Tab全部保留作未来占位，只删设备字典。下次优先修 project-plan.spec.ts:63 日期倒挂用例(先看trace确认DatePicker输入是否落值，大概率要改点日历单元格)。另发现需求文档V2.3的§4缺产线类型管理章节，已记入pending。",
+  "next_context": "本会话把上次列入pending的产线↔系统数据库迁移做完了：systems表已建(21个系统)、production_lines换成9条真实产品线(demo 3条已备份删除)、devices加system_id外键并回填828条。层级链路 产线→系统→设备 现已可两跳查询。用户本次3个关键决策：①产线↔系统对应关系以用户本次口述清单为准，覆盖原型里的旧4产线版本(启明作废，教育数据指挥中心从启明移到平台产品线) ②「AI算力中心」「智能交互终端」不是真实系统，不建字典项 ③走方案A——保留那412条设备行不删，system_id留NULL，等设备清单重新维护时再逐条归属(用户原话：设备清单还要重新维护，设备到底属于哪个系统后面还要维护)。代码+ddl.sql+6份文档已同步，state.json已更新，git commit待执行(push需单独确认)。下一步可选：①给systems建后端API+前端管理界面(目前字典只能改库) ②设备表单改为选系统落system_id、产线由系统带出 ③修 project-plan.spec.ts:63 日期倒挂用例(先看trace确认DatePicker输入是否落值)。注意ddl.sql有既有建表顺序缺陷(schools引用后面才建的project_info)，已确认非本次引入，未修。",
   "modified_files": [
-    "docs/06-原型设计/系统管理原型-V1.0.html",
-    "docs/06-原型设计/设备信息原型-V2.2.html",
-    "docs/01-需求文档/需求文档-GX教育项目交付管理系统V2.1.md",
+    "backend/scripts/migrate_systems_table.py (新建·迁移脚本)",
+    "backend/scripts/backup_production_lines.json (新建·demo产线备份)",
+    "backend/app/models/system.py (新建)",
+    "backend/app/models/device.py (加system_id)",
+    "backend/app/services/dashboard_service.py (系统总数改按systems表统计)",
+    "ddl.sql (systems建表+devices.system_id+FK+9产线21系统种子)",
+    "docs/01-需求文档/需求文档-GX教育项目交付管理系统V2.3.md (§6.11.3+术语表)",
+    "docs/02-架构设计/数据库设计.md (§4.3.1a systems+FK清单+devices字段)",
+    "docs/02-架构设计/详细设计开发文档.md (数据模型表+卡片口径+§12.3设备字段+数据字典说明)",
+    "docs/01-需求文档/功能增强开发排期V2.2.md (8条产线作废改9条)",
+    "README.md (表清单+systems DDL+产线→系统→设备业务规则章)",
+    "CLAUDE.md (易错字段名+业务规则摘要)",
     "state.json"
   ],
-  "last_decision": "系统需成为独立实体（新建systems表含production_line_id）才能落地产线-系统一对多；本次只改原型+需求文档，数据库迁移列入pending（不重建device_systems，systems仅存系统名+产线归属，无规格字段）"
+  "last_decision": "系统提升为独立实体(systems表)承载产线归属，devices.system_id为权威归属字段、system_name降级为兼容文本；产线↔系统关系存于数据库数据、运行期可维护而非代码写死。「AI算力中心」「智能交互终端」经用户确认非真实系统不建字典项，其412条设备按用户选定的方案A保留行、system_id留NULL，待设备清单重新维护时补齐(不做物理删除，避免不可逆丢数据及WBS孤儿任务)。"
 }

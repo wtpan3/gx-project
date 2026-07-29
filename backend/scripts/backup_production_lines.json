@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "project_id": 1,
+    "code": "PL001",
+    "name": "智能制造产线",
+    "description": "用于智能硬件生产",
+    "is_enabled": 1
+  },
+  {
+    "id": 2,
+    "project_id": 1,
+    "code": "PL002",
+    "name": "软件开发产线",
+    "description": "敏捷开发流水线",
+    "is_enabled": 1
+  },
+  {
+    "id": 3,
+    "project_id": 1,
+    "code": "PL003",
+    "name": "内容制作产线",
+    "description": "数字内容生成",
+    "is_enabled": 1
+  }
+]

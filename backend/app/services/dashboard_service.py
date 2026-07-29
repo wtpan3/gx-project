@@ -9,6 +9,7 @@ from app.models.device import Device
 from app.models.wbs_task import WbsTask
 from app.models.risk import Risk
 from app.models.production_line import ProductionLine
+from app.models.system import System
 from app.models.software_module import SoftwareModule
 from app.models.user import User
 from app.schemas.dashboard import (
@@ -35,8 +36,8 @@ class DashboardService:
         """7个顶部卡片统计"""
         total_schools = db.query(School).count()
         priority_schools = db.query(School).filter(School.is_key == True).count()
-        # 统计系统数（按system_name去重统计）
-        total_systems = db.query(Device.system_name).filter(Device.system_name.isnot(None)).distinct().count()
+        # 统计系统数（按systems字典表统计，systems为权威数据源）
+        total_systems = db.query(System).filter(System.is_enabled == 1).count()
         device_types_count = db.query(func.count(func.distinct(Device.device_name))).scalar() or 0
         production_lines_count = db.query(ProductionLine).filter(ProductionLine.is_enabled == 1).count()
         external_devices_count = db.query(func.count(func.distinct(Device.device_name))).filter(

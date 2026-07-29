@@ -73,16 +73,17 @@
 - risks：risk_desc(非description)、impact_description(非impact)、response_strategy(非response_plan)、responsible_person_id(非owner_id)、**project_id**
   - ⚠️ 风险轻量模型：**已删除 probability/impact/response_deadline**，**新增 progress_note**。勿用已删字段。现存字段：risk_desc/trigger_condition/impact_description/risk_level/response_strategy/progress_note/responsible_person_id/status/school_id/**project_id**
 - wbs_tasks：task_code(唯一)、responsible_person_id(非assignee_id)、work_content_l4(L4统计口径)、parent_id(层级父子，前端树形依赖)、**project_id**、**requires_material**、**material_status**
-- devices：**project_id**、system_name(非system_id)、type(硬件/软件/其他)、source(三方外采/库存设备)
+- devices：**project_id**、**system_id(FK→systems，权威归属字段)**、system_name(文本，保留兼容，勿作归属判断)、type(硬件/软件/其他)、source(三方外采/库存设备)
 - templates：**重大变更（2026-07-28）**— 删除stage字段，新增project_id/template_key/file_name/file_size/file_type/upload_by/download_count/is_latest/is_deleted；type从ENUM改为VARCHAR(50)从字典读；关联WBS改用template_wbs_stages表
 - template_wbs_stages：**新表**— template_id/level(L1/L2/L3)/stage_value/is_required
 - files：**project_id**、**wbs_task_id**、**template_id**（后两者支持材料卡点机制）
 - software_modules：**project_id**、phase(非current_phase)、progress、expected_completion_date、sort_order；**无 code/description 字段**
-- production_lines：**project_id**、code/name/description/is_enabled；**无 system_id 字段**
+- production_lines：**project_id**、code/name/description/is_enabled；**无 system_id 字段**（反向关联在 systems.production_line_id）。现有9条真实产品线，demo 3条已删
+- systems：**新表（2026-07-28）**— project_id/name/production_line_id(FK→production_lines)/description/sort_order/is_enabled，唯一键(project_id,name)；现有21条。层级 **产线→系统→设备**，对应关系存于数据非代码写死；清单见 需求文档V2.3 §6.11.3
 - todos：**project_id**（2026-07-28 首次建表）、parent_id(树形)、transferred_from_id(非transferred_from)
 - task_attachments：**无 project_id**，经 task_id→wbs_tasks 间接归属项目
 - **已删除的表**（勿引用）：training_schools（并入trainings.school_id）、risk_tasks（风险轻量模型取消）、device_systems、templates_old_20260728
-- 外键：responsible_person_id/assignee_id→users.id，school_id→schools.id，**project_id→project_info.id**
+- 外键：responsible_person_id/assignee_id→users.id，school_id→schools.id，**project_id→project_info.id**，**devices.system_id→systems.id**，**systems.production_line_id→production_lines.id**
 - 前端责任人显示 assignee_name（由 responsible_person_id JOIN users 查出），数据库无 assignee_name 列
 - JWT 的 sub 字段用 user.id（不是 username）
 
@@ -146,6 +147,7 @@ backend/scripts/import_sql.sh  <sql文件> [数据库名]   # Bash
 - 首页状态：🟢正常/🟡关注(延期3-7天或中风险或进度<80%)/🔴异常(延期>7天或≥2高风险)
 - 待办联动：末级待办全完成→上级自动"已完成"
 - WBS自动生成：设备新增时在"交付实施"阶段生成WBS任务(仅建设年份≤当前年)；设备编辑后更新时间/新增L4/多余标记孤儿
+- 产线→系统→设备三级：9产线/21系统，权威归属用 devices.system_id（非 system_name）；首页"系统总数"取 systems 表计数，"产线类型"取 production_lines 计数；412条设备 system_id 为 NULL 待设备清单重维护时补
 
 ## Git 规范
 - 提交格式：<type>(<scope>): <subject>，type=feat/fix/docs/style/refactor/perf/test/chore/ci

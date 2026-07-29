@@ -1,6 +1,6 @@
 -- ============================================================
--- GX教育项目交付管理系统 - 数据库完整DDL（16张表）
--- 版本：V2.1
+-- GX教育项目交付管理系统 - 数据库完整DDL（19张表）
+-- 版本：V2.2
 -- 日期：2026-07-17
 -- 字符集：utf8mb4
 -- ============================================================
@@ -187,7 +187,8 @@ CREATE TABLE devices (
     project_id INT NOT NULL COMMENT '所属项目',
     project_name VARCHAR(100) NOT NULL COMMENT '项目名称',
     construction_year INT NOT NULL COMMENT '建设年份',
-    system_name VARCHAR(100) COMMENT '系统名称',
+    system_name VARCHAR(100) COMMENT '系统名称(文本,保留兼容)',
+    system_id INT COMMENT '所属系统(关联systems表)',
     device_name VARCHAR(100) NOT NULL COMMENT '设备名称',
     brand VARCHAR(100) NOT NULL COMMENT '品牌',
     model VARCHAR(100) NOT NULL COMMENT '型号',
@@ -213,8 +214,10 @@ CREATE TABLE devices (
     FOREIGN KEY (project_id) REFERENCES project_info(id),
     FOREIGN KEY (school_id) REFERENCES schools(id),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
+    -- system_id 外键在 systems 表建好后由文件末尾 ALTER TABLE 补充(建表顺序所致)
     INDEX idx_project (project_id),
-    INDEX idx_school (school_id)
+    INDEX idx_school (school_id),
+    INDEX idx_system (system_id)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备信息表';
 
 -- ============================================================
@@ -357,6 +360,31 @@ CREATE TABLE production_lines (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='产线类型字典表';
 
 -- ============================================================
+-- 19. systems - 系统字典表
+-- 层级关系: 产线(production_lines) -> 系统(systems) -> 设备(devices)
+-- ============================================================
+CREATE TABLE systems (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    project_id INT NOT NULL DEFAULT 1 COMMENT '所属项目',
+    name VARCHAR(100) NOT NULL COMMENT '系统名称',
+    production_line_id INT COMMENT '所属产线',
+    description VARCHAR(500) COMMENT '描述',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project_info(id),
+    FOREIGN KEY (production_line_id) REFERENCES production_lines(id) ON DELETE SET NULL,
+    UNIQUE KEY uq_systems_project_name (project_id, name),
+    INDEX idx_project (project_id),
+    INDEX idx_production_line (production_line_id)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统字典表';
+
+-- devices.system_id 外键(需 systems 表已创建)
+ALTER TABLE devices ADD CONSTRAINT fk_devices_system
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE SET NULL;
+
+-- ============================================================
 -- 16. software_modules - 软件模块交付进度表
 -- ============================================================
 CREATE TABLE software_modules (
@@ -492,3 +520,43 @@ INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('L2子阶段_运营维护', '日常运维', '日常运维', 1),
 ('L2子阶段_运营维护', '定期巡检', '定期巡检', 2),
 ('L2子阶段_运营维护', '故障处理', '故障处理', 3);
+
+-- 11. 产线类型（9条产品线）
+INSERT INTO production_lines (project_id, code, name, description, is_enabled) VALUES
+(1, 'PL-CLASSROOM',  '大课堂',               '智慧课堂类产品',   1),
+(1, 'PL-DAXUEQING',  '大学情',               '学情分析类产品',   1),
+(1, 'PL-PLATFORM',   '平台产品线',           '基础平台与应用能力', 1),
+(1, 'PL-STEAM',      '科创教育',             '科创实验室类产品', 1),
+(1, 'PL-EXAM-LANG',  '考试与语言学习产品线', 'AI听说与语言学习', 1),
+(1, 'PL-SPORT',      '智慧体育产品线',       '智慧体育类产品',   1),
+(1, 'PL-MENTAL',     '智慧心育产品线',       '心理健康教育',     1),
+(1, 'PL-SCIPOP',     '科普研究院',           '科普类产品',       1),
+(1, 'PL-READING',    '读写科技',             '阅读类产品',       1);
+
+-- 12. 系统字典（21个系统，按产线归属）
+INSERT INTO systems (project_id, name, production_line_id, sort_order, is_enabled)
+SELECT 1, s.name, pl.id, s.sort_order, 1
+FROM (
+    SELECT '智慧课堂' AS name, 'PL-CLASSROOM' AS pl_code, 0 AS sort_order UNION ALL
+    SELECT 'AI教师助手', 'PL-CLASSROOM', 1 UNION ALL
+    SELECT '智慧黑板', 'PL-CLASSROOM', 2 UNION ALL
+    SELECT '大数据精准教学分析系统', 'PL-DAXUEQING', 3 UNION ALL
+    SELECT '智能批阅服务', 'PL-DAXUEQING', 4 UNION ALL
+    SELECT '数智工作台', 'PL-PLATFORM', 5 UNION ALL
+    SELECT '教育数据指挥中心', 'PL-PLATFORM', 6 UNION ALL
+    SELECT '智能应用创编平台', 'PL-PLATFORM', 7 UNION ALL
+    SELECT '应用能力服务', 'PL-PLATFORM', 8 UNION ALL
+    SELECT '学生评价系统', 'PL-PLATFORM', 9 UNION ALL
+    SELECT '人工智能实验室', 'PL-STEAM', 10 UNION ALL
+    SELECT '信息科技', 'PL-STEAM', 11 UNION ALL
+    SELECT 'AI科学实验室', 'PL-STEAM', 12 UNION ALL
+    SELECT 'AI听说模拟测试', 'PL-EXAM-LANG', 13 UNION ALL
+    SELECT 'AI英语听说教学', 'PL-EXAM-LANG', 14 UNION ALL
+    SELECT '智慧操场', 'PL-SPORT', 15 UNION ALL
+    SELECT '运动小站', 'PL-SPORT', 16 UNION ALL
+    SELECT '智慧体育课', 'PL-SPORT', 17 UNION ALL
+    SELECT '智慧心育', 'PL-MENTAL', 18 UNION ALL
+    SELECT '智慧科技长廊', 'PL-SCIPOP', 19 UNION ALL
+    SELECT '数字阅览室', 'PL-READING', 20
+) s
+JOIN production_lines pl ON pl.code = s.pl_code AND pl.project_id = 1;

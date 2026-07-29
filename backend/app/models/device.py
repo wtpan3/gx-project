@@ -10,6 +10,7 @@ class Device(Base):
     project_name = Column(String(100), nullable=False)
     construction_year = Column(Integer, nullable=False)
     system_name = Column(String(100))
+    system_id = Column(Integer, ForeignKey('systems.id'))
     device_name = Column(String(100), nullable=False)
     brand = Column(String(100), nullable=False)
     model = Column(String(100), nullable=False)

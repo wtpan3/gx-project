@@ -155,7 +155,7 @@ wbs_tasks.status/priority、todos.priority。
 - **开发库**: gx_project_dev
 - **生产库**: gx_project
 - **Root密码**: GX2026!root
-- **表数量**: 19张（基础16张 + Dashboard新增3张：production_lines + software_modules + todos）
+- **表数量**: 19张（核心15张 + Dashboard新增4张：production_lines + systems + software_modules + todos）
 
 ### 环境变量
 
@@ -179,7 +179,7 @@ DB_NAME=gx_project_dev
 
 ## 数据库表结构
 
-### 核心表清单（16张）
+### 核心表清单（15张）
 
 | 表名 | 说明 |
 |------|------|
@@ -187,18 +187,21 @@ DB_NAME=gx_project_dev
 | schools | 学校表 |
 | suppliers | 供应商表 |
 | templates | 模板表 |
+| template_wbs_stages | 模板关联WBS阶段表 |
 | dict_items | 数据字典表 |
 | project_info | 项目信息表 |
 | operation_logs | 操作日志表 |
 | wbs_tasks | WBS任务表 |
+| task_attachments | 任务佐证材料表 |
 | devices | 设备信息表 |
 | trainings | 培训计划表 |
 | risks | 风险管理表 |
-| risk_tasks | 风险应对任务关联表 |
 | reports | 报告管理表 |
 | files | 交付材料库表 |
 
-### Dashboard新增表
+> 已删除表（勿引用）：`risk_tasks`（风险轻量模型取消）、`device_systems`、`training_schools`、`templates_old_20260728`。
+
+### Dashboard新增表（4张）
 
 **production_lines**（产线类型字典表）
 ```sql
@@ -212,6 +215,26 @@ CREATE TABLE production_lines (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
+
+> 现有9条真实产品线（2026-07-28 定稿）：PL-CLASSROOM 大课堂、PL-DAXUEQING 大学情、PL-PLATFORM 平台产品线、PL-STEAM 科创教育、PL-EXAM-LANG 考试与语言学习产品线、PL-SPORT 智慧体育产品线、PL-MENTAL 智慧心育产品线、PL-SCIPOP 科普研究院、PL-READING 读写科技。
+
+**systems**（系统字典表，2026-07-28 新增）
+```sql
+CREATE TABLE systems (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    project_id INT NOT NULL DEFAULT 1,
+    name VARCHAR(100) NOT NULL,
+    production_line_id INT,          -- FK→production_lines.id ON DELETE SET NULL
+    description VARCHAR(500),
+    sort_order INT DEFAULT 0,
+    is_enabled TINYINT DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_systems_project_name (project_id, name)
+);
+```
+> 层级链路：**产线 → 系统 → 设备**（`systems.production_line_id` + `devices.system_id`）。现有21个系统，产线↔系统对应关系为运行期可维护数据（改字典即改关系，非代码写死），完整清单见 `docs/01-需求文档/需求文档-GX教育项目交付管理系统V2.3.md` §6.11.3。
+> `devices.system_name`（文本）保留兼容，权威归属字段为 `devices.system_id`；当前828条设备已回填，412条为NULL待设备清单重新维护时补齐。
 
 **software_modules**（软件模块交付进度表）
 ```sql
@@ -284,6 +307,20 @@ wbs_tasks(task_code/priority/responsible_person_id/status/parent_id)。
 - 设备信息新增时，自动在"交付实施"阶段生成对应WBS任务
 - 仅生成建设年份≤当前年份的设备任务
 - 设备编辑后：已有任务更新计划时间，新增L4任务，不再需要的标记为孤儿任务
+
+### 产线 → 系统 → 设备 层级规则（2026-07-28 建立）
+
+```
+production_lines (9条产品线)
+    └── systems (21个系统, systems.production_line_id → production_lines.id)
+            └── devices (devices.system_id → systems.id)
+```
+
+- **权威归属字段**：`devices.system_id`（非 `devices.system_name`）。`system_name` 为历史文本字段，保留兼容，不作为归属判断依据。
+- **对应关系可运行期维护**：产线↔系统关系是 `systems` 表的数据，改字典即改关系，**未在代码中写死**；新增/调整系统只需增改 `systems` 行。
+- **统计口径**：首页"系统总数"卡片取 `systems` 表 `is_enabled=1` 计数（=21），"产线类型"取 `production_lines` 计数（=9）。**已废弃**原口径 `COUNT(DISTINCT devices.system_name)`。
+- **已知数据缺口**：412条设备 `system_id` 为 NULL（原 `system_name` 为「AI算力中心」「智能交互终端」，经确认这两个系统不存在，故不建字典项），待设备清单重新维护时逐条归属；828条已回填。
+- 9条产线与21个系统的完整对应清单见 `docs/01-需求文档/需求文档-GX教育项目交付管理系统V2.3.md` §6.11.3。
 
 ---
 

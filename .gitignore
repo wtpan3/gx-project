@@ -26,6 +26,11 @@ frontend/build/
 .env.local
 frontend/.env.local
 
+# Playwright 测试产物
+frontend/e2e-report/
+frontend/test-results/
+frontend/playwright-report/
+
 # ===== 数据与上传 =====
 mysql-data/
 uploads/

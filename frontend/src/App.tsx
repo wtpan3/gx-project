@@ -28,8 +28,6 @@ function App() {
           <Route path="/delivery-progress" element={<Placeholder />} />
           <Route path="/risk-management" element={<Placeholder />} />
           <Route path="/device-info" element={<Placeholder />} />
-          <Route path="/school-dashboard" element={<Placeholder />} />
-          <Route path="/training-management" element={<Placeholder />} />
           <Route path="/report-management" element={<Placeholder />} />
           <Route path="/material-library" element={<Placeholder />} />
           <Route path="/project-review" element={<Placeholder />} />

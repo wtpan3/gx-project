@@ -132,6 +132,7 @@ backend/scripts/import_sql.ps1 <sql文件> [数据库名]   # PowerShell
 backend/scripts/import_sql.sh  <sql文件> [数据库名]   # Bash
 ```
 脚本已内置 --default-character-set=utf8mb4。建表/改表均需 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci。
+脚本位置：`backend/scripts/import_sql.ps1`（Windows）或 `backend/scripts/import_sql.sh`（Linux/Mac）。
 
 ## 其他踩坑
 - uvicorn --reload 不可靠：改完后端行为没变，手动 kill 所有 python 进程重启。

@@ -103,11 +103,7 @@ cd frontend; $env:PATH="C:\Program Files\nodejs;$env:PATH"; $env:BROWSER='none';
 
 ### 数据库枚举值约定
 
-> ⚠️ **枚举值权威来源已统一到 [CLAUDE.md](CLAUDE.md) 的"数据库枚举值"章节**（与 ddl.sql 对齐）。
-> 开发时以 CLAUDE.md / ddl.sql 为准，本处不再重复维护，避免两处不一致。
-
-涉及：devices.source/status、risks.status、software_modules.phase、
-wbs_tasks.status/priority、todos.priority。
+> 枚举值权威来源以 [CLAUDE.md](CLAUDE.md) 的"数据库枚举值"章节和 `ddl.sql` 为准，此处不重复维护。
 
 ### 菜单顺序（左侧导航栏）
 
@@ -286,9 +282,10 @@ wbs_tasks(task_code/priority/responsible_person_id/status/parent_id)。
 > 本章是业务规则的**详细权威版**；CLAUDE.md 只保留速记摘要，改动时以本章为准。
 
 ### 整体进度计算
-```
-整体进度 = 学校维度30% × 学校完成率 + 硬件维度40% × 硬件完成率 + 软件维度30% × 软件完成率
-```
+
+整体进度 = 已完成末级任务数（`work_content_l4` 且 `status='已完成'`）/ 总末级任务数，**无加权**。
+
+> 2026-07-26 定稿，已废弃原「学校30% + 硬件40% + 软件30%」加权公式。代码实现见 `backend/app/services/dashboard_service.py:165-171`。
 
 ### 首页状态判断
 
@@ -326,14 +323,9 @@ production_lines (9条产品线)
 
 ## API接口规范
 
-### 统一响应格式
-```json
-{
-  "code": 0,
-  "data": {},
-  "message": "success"
-}
-```
+### 响应格式
+
+当前接口均返回**裸 JSON 对象，无统一包装层**（如 `{"items": [...]}`、`{"total": n, "items": [...]}`、`{"access_token": "..."}`）。新增接口沿用现状，勿假设存在 `code/data/message` 包装。
 
 ### 认证方式
 - **Header**: `Authorization: Bearer <token>`

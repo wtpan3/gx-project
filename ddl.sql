@@ -1,8 +1,29 @@
 -- ============================================================
 -- GX教育项目交付管理系统 - 数据库完整DDL（19张表）
 -- 版本：V2.2
--- 日期：2026-07-17
+-- 日期：2026-07-29
 -- 字符集：utf8mb4
+-- 
+-- 建表顺序说明：被依赖的表先创建，确保外键约束正常建立
+-- 1. project_info   → 被所有带 project_id 的表依赖
+-- 2. users          → 被 schools/templates/wbs_tasks/risks/files/todos/operation_logs 依赖
+-- 3. suppliers      → 被 devices 依赖
+-- 4. production_lines → 被 systems 依赖
+-- 5. systems        → 被 devices 依赖
+-- 6. schools        → 被 wbs_tasks/devices/trainings/risks/reports/files 依赖
+-- 7. dict_items     → 无依赖
+-- 8. templates      → 被 template_wbs_stages/files 依赖
+-- 9. template_wbs_stages → 依赖 templates
+-- 10. wbs_tasks     → 被 task_attachments/trainings/files 依赖
+-- 11. task_attachments → 依赖 wbs_tasks
+-- 12. devices       → 依赖 project_info/schools/suppliers/systems
+-- 13. trainings     → 依赖 project_info/wbs_tasks/schools
+-- 14. risks         → 依赖 project_info/users/schools
+-- 15. reports       → 依赖 project_info/schools
+-- 16. files         → 依赖 project_info/wbs_tasks/templates/users/schools
+-- 17. software_modules → 依赖 project_info
+-- 18. todos         → 依赖 project_info/users
+-- 19. operation_logs → 依赖 project_info/users
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS gx_project 
@@ -11,7 +32,21 @@ CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE gx_project;
 
 -- ============================================================
--- 1. users - 用户表
+-- 1. project_info - 项目信息表（被所有表依赖，必须第1个创建）
+-- ============================================================
+CREATE TABLE project_info (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    project_name VARCHAR(100) NOT NULL COMMENT '项目名称',
+    project_code VARCHAR(50) UNIQUE NOT NULL COMMENT '项目编码',
+    start_date DATE NOT NULL COMMENT '项目开始日期',
+    end_date DATE NOT NULL COMMENT '项目结束日期',
+    overall_status ENUM('未启动','进行中','试运行','已验收','已结项') DEFAULT '未启动' COMMENT '项目整体状态',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) COMMENT='项目信息表';
+
+-- ============================================================
+-- 2. users - 用户表
 -- ============================================================
 CREATE TABLE users (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -27,7 +62,58 @@ CREATE TABLE users (
 ) COMMENT='用户表';
 
 -- ============================================================
--- 2. schools - 学校表
+-- 3. suppliers - 供应商表
+-- ============================================================
+CREATE TABLE suppliers (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE NOT NULL COMMENT '供应商名称',
+    contact_person VARCHAR(50) NOT NULL COMMENT '联系人',
+    contact_phone VARCHAR(20) NOT NULL COMMENT '联系电话',
+    contact_email VARCHAR(100) COMMENT '联系邮箱',
+    remark TEXT COMMENT '备注',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) COMMENT='供应商表';
+
+-- ============================================================
+-- 4. production_lines - 产线类型字典表
+-- ============================================================
+CREATE TABLE production_lines (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    project_id INT NOT NULL DEFAULT 1 COMMENT '所属项目',
+    code VARCHAR(50) UNIQUE NOT NULL COMMENT '产线编码',
+    name VARCHAR(100) NOT NULL COMMENT '产线名称',
+    description VARCHAR(500) COMMENT '描述',
+    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project_info(id),
+    INDEX idx_project (project_id)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='产线类型字典表';
+
+-- ============================================================
+-- 5. systems - 系统字典表
+-- 层级关系：产线(production_lines) -> 系统(systems) -> 设备(devices)
+-- ============================================================
+CREATE TABLE systems (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    project_id INT NOT NULL DEFAULT 1 COMMENT '所属项目',
+    name VARCHAR(100) NOT NULL COMMENT '系统名称',
+    production_line_id INT COMMENT '所属产线',
+    description VARCHAR(500) COMMENT '描述',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project_info(id),
+    FOREIGN KEY (production_line_id) REFERENCES production_lines(id) ON DELETE SET NULL,
+    UNIQUE KEY uq_systems_project_name (project_id, name),
+    INDEX idx_project (project_id),
+    INDEX idx_production_line (production_line_id)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统字典表';
+
+-- ============================================================
+-- 6. schools - 学校表
 -- ============================================================
 CREATE TABLE schools (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -50,21 +136,25 @@ CREATE TABLE schools (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='学校表';
 
 -- ============================================================
--- 3. suppliers - 供应商表
+-- 7. dict_items - 数据字典表
 -- ============================================================
-CREATE TABLE suppliers (
+CREATE TABLE dict_items (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE NOT NULL COMMENT '供应商名称',
-    contact_person VARCHAR(50) NOT NULL COMMENT '联系人',
-    contact_phone VARCHAR(20) NOT NULL COMMENT '联系电话',
-    contact_email VARCHAR(100) COMMENT '联系邮箱',
-    remark TEXT COMMENT '备注',
+    project_id INT DEFAULT 1 COMMENT '所属项目（NULL=全局共享）',
+    category VARCHAR(50) NOT NULL COMMENT '字典分类',
+    label VARCHAR(100) NOT NULL COMMENT '显示名称',
+    value VARCHAR(100) NOT NULL COMMENT '值',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) COMMENT='供应商表';
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES project_info(id),
+    UNIQUE KEY uk_category_value (category, value),
+    INDEX idx_project_category (project_id, category)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='数据字典表';
 
 -- ============================================================
--- 4. templates - 模板表
+-- 8. templates - 模板表
 -- ============================================================
 CREATE TABLE templates (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -93,7 +183,7 @@ CREATE TABLE templates (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='模板表';
 
 -- ============================================================
--- 5. template_wbs_stages - 模板-WBS阶段关联表
+-- 9. template_wbs_stages - 模板-WBS阶段关联表
 -- ============================================================
 CREATE TABLE template_wbs_stages (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -107,39 +197,7 @@ CREATE TABLE template_wbs_stages (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='模板-WBS阶段关联表';
 
 -- ============================================================
--- 6. dict_items - 数据字典表
--- ============================================================
-CREATE TABLE dict_items (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    project_id INT DEFAULT 1 COMMENT '所属项目（NULL=全局共享）',
-    category VARCHAR(50) NOT NULL COMMENT '字典分类',
-    label VARCHAR(100) NOT NULL COMMENT '显示名称',
-    value VARCHAR(100) NOT NULL COMMENT '值',
-    sort_order INT DEFAULT 0 COMMENT '排序',
-    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (project_id) REFERENCES project_info(id),
-    UNIQUE KEY uk_category_value (category, value),
-    INDEX idx_project_category (project_id, category)
-) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='数据字典表';
-
--- ============================================================
--- 7. project_info - 项目信息表
--- ============================================================
-CREATE TABLE project_info (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    project_name VARCHAR(100) NOT NULL COMMENT '项目名称',
-    project_code VARCHAR(50) UNIQUE NOT NULL COMMENT '项目编码',
-    start_date DATE NOT NULL COMMENT '项目开始日期',
-    end_date DATE NOT NULL COMMENT '项目结束日期',
-    overall_status ENUM('未启动','进行中','试运行','已验收','已结项') DEFAULT '未启动' COMMENT '项目整体状态',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) COMMENT='项目信息表';
-
--- ============================================================
--- 8. wbs_tasks - WBS任务表
+-- 10. wbs_tasks - WBS任务表
 -- ============================================================
 CREATE TABLE wbs_tasks (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -180,7 +238,24 @@ CREATE TABLE wbs_tasks (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='WBS任务表';
 
 -- ============================================================
--- 9. devices - 设备信息表
+-- 11. task_attachments - 任务佐证材料表
+-- ============================================================
+CREATE TABLE task_attachments (
+    id INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
+    task_id INT NOT NULL COMMENT '关联任务ID',
+    file_name VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    file_path VARCHAR(500) NOT NULL COMMENT '存储路径(相对uploads)',
+    file_size INT COMMENT '文件大小(字节)',
+    description VARCHAR(500) COMMENT '材料说明',
+    uploaded_by INT COMMENT '上传人ID',
+    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
+    FOREIGN KEY (task_id) REFERENCES wbs_tasks(id),
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_task_id (task_id)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务佐证材料';
+
+-- ============================================================
+-- 12. devices - 设备信息表
 -- ============================================================
 CREATE TABLE devices (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -214,14 +289,14 @@ CREATE TABLE devices (
     FOREIGN KEY (project_id) REFERENCES project_info(id),
     FOREIGN KEY (school_id) REFERENCES schools(id),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL,
-    -- system_id 外键在 systems 表建好后由文件末尾 ALTER TABLE 补充(建表顺序所致)
+    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE SET NULL,
     INDEX idx_project (project_id),
     INDEX idx_school (school_id),
     INDEX idx_system (system_id)
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='设备信息表';
 
 -- ============================================================
--- 10. trainings - 培训计划表
+-- 13. trainings - 培训计划表
 -- ============================================================
 CREATE TABLE trainings (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -250,7 +325,7 @@ CREATE TABLE trainings (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='培训计划表';
 
 -- ============================================================
--- 11. risks - 风险管理表
+-- 14. risks - 风险管理表
 -- ============================================================
 CREATE TABLE risks (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -273,7 +348,7 @@ CREATE TABLE risks (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='风险管理表';
 
 -- ============================================================
--- 12. reports - 报告管理表
+-- 15. reports - 报告管理表
 -- ============================================================
 CREATE TABLE reports (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -293,7 +368,7 @@ CREATE TABLE reports (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='报告管理表';
 
 -- ============================================================
--- 13. files - 交付材料库表
+-- 16. files - 交付材料库表
 -- ============================================================
 CREATE TABLE files (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -322,70 +397,7 @@ CREATE TABLE files (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='交付材料库表';
 
 -- ============================================================
--- 14. operation_logs - 操作日志表
--- ============================================================
-CREATE TABLE operation_logs (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    project_id INT DEFAULT NULL COMMENT '所属项目（NULL=跨项目操作）',
-    user_id INT NOT NULL COMMENT '操作人ID',
-    module VARCHAR(50) NOT NULL COMMENT '所属模块',
-    action VARCHAR(50) NOT NULL COMMENT '操作类型',
-    target_id INT COMMENT '操作目标ID',
-    before_data JSON COMMENT '变更前数据',
-    after_data JSON COMMENT '变更后数据',
-    ip_address VARCHAR(45) COMMENT 'IP地址',
-    batch_file_name VARCHAR(255) COMMENT '批量导入文件名',
-    batch_success_count INT COMMENT '批量成功数',
-    batch_fail_count INT COMMENT '批量失败数',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
-    FOREIGN KEY (project_id) REFERENCES project_info(id) ON DELETE SET NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    INDEX idx_project_module (project_id, module)
-) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
-
--- ============================================================
--- 15. production_lines - 产线类型字典表
--- ============================================================
-CREATE TABLE production_lines (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    project_id INT NOT NULL DEFAULT 1 COMMENT '所属项目',
-    code VARCHAR(50) UNIQUE NOT NULL COMMENT '产线编码',
-    name VARCHAR(100) NOT NULL COMMENT '产线名称',
-    description VARCHAR(500) COMMENT '描述',
-    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (project_id) REFERENCES project_info(id),
-    INDEX idx_project (project_id)
-) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='产线类型字典表';
-
--- ============================================================
--- 19. systems - 系统字典表
--- 层级关系: 产线(production_lines) -> 系统(systems) -> 设备(devices)
--- ============================================================
-CREATE TABLE systems (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    project_id INT NOT NULL DEFAULT 1 COMMENT '所属项目',
-    name VARCHAR(100) NOT NULL COMMENT '系统名称',
-    production_line_id INT COMMENT '所属产线',
-    description VARCHAR(500) COMMENT '描述',
-    sort_order INT DEFAULT 0 COMMENT '排序',
-    is_enabled TINYINT DEFAULT 1 COMMENT '是否启用',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (project_id) REFERENCES project_info(id),
-    FOREIGN KEY (production_line_id) REFERENCES production_lines(id) ON DELETE SET NULL,
-    UNIQUE KEY uq_systems_project_name (project_id, name),
-    INDEX idx_project (project_id),
-    INDEX idx_production_line (production_line_id)
-) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统字典表';
-
--- devices.system_id 外键(需 systems 表已创建)
-ALTER TABLE devices ADD CONSTRAINT fk_devices_system
-    FOREIGN KEY (system_id) REFERENCES systems(id) ON DELETE SET NULL;
-
--- ============================================================
--- 16. software_modules - 软件模块交付进度表
+-- 17. software_modules - 软件模块交付进度表
 -- ============================================================
 CREATE TABLE software_modules (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -402,7 +414,7 @@ CREATE TABLE software_modules (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='软件模块交付进度表';
 
 -- ============================================================
--- 17. todos - 待办任务表
+-- 18. todos - 待办任务表
 -- ============================================================
 CREATE TABLE todos (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -433,20 +445,27 @@ CREATE TABLE todos (
 ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='待办任务表';
 
 -- ============================================================
--- 18. task_attachments - 任务佐证材料表
+-- 19. operation_logs - 操作日志表
 -- ============================================================
-CREATE TABLE task_attachments (
-    id INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键',
-    task_id INT NOT NULL COMMENT '关联任务ID',
-    file_name VARCHAR(255) NOT NULL COMMENT '原始文件名',
-    file_path VARCHAR(500) NOT NULL COMMENT '存储路径(相对uploads)',
-    file_size INT COMMENT '文件大小(字节)',
-    description VARCHAR(500) COMMENT '材料说明',
-    uploaded_by INT COMMENT '上传人ID',
-    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '上传时间',
-    FOREIGN KEY (task_id) REFERENCES wbs_tasks(id),
-    INDEX idx_task_id (task_id)
-) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务佐证材料';
+CREATE TABLE operation_logs (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    project_id INT DEFAULT NULL COMMENT '所属项目（NULL=跨项目操作）',
+    user_id INT NOT NULL COMMENT '操作人ID',
+    module VARCHAR(50) NOT NULL COMMENT '所属模块',
+    action VARCHAR(50) NOT NULL COMMENT '操作类型',
+    target_id INT COMMENT '操作目标ID',
+    before_data JSON COMMENT '变更前数据',
+    after_data JSON COMMENT '变更后数据',
+    ip_address VARCHAR(45) COMMENT 'IP地址',
+    batch_file_name VARCHAR(255) COMMENT '批量导入文件名',
+    batch_success_count INT COMMENT '批量成功数',
+    batch_fail_count INT COMMENT '批量失败数',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    FOREIGN KEY (project_id) REFERENCES project_info(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_project_module (project_id, module)
+) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
+
 
 -- ============================================================
 -- 初始化数据
@@ -468,21 +487,13 @@ VALUES (
 INSERT INTO project_info (project_name, project_code, start_date, end_date, overall_status) 
 VALUES ('GXAI+教育项目', 'GX2026', '2026-01-01', '2026-12-31', '进行中');
 
--- 3. 数据字典 - 关联阶段
-INSERT INTO dict_items (category, label, value, sort_order) VALUES
-('关联阶段', '到货验收', '到货验收', 1),
-('关联阶段', '加电测试', '加电测试', 2),
-('关联阶段', '校级验收', '校级验收', 3),
-('关联阶段', '培训', '培训', 4),
-('关联阶段', '无', '无', 5);
-
--- 4. 数据字典 - 建设年份
+-- 3. 数据字典 - 建设年份
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('建设年份', '2026', '2026', 1),
 ('建设年份', '2027', '2027', 2),
 ('建设年份', '2028', '2028', 3);
 
--- 5. 数据字典 - WBS状态
+-- 4. 数据字典 - WBS状态
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('WBS状态', '待开始', '待开始', 1),
 ('WBS状态', '进行中', '进行中', 2),
@@ -490,36 +501,51 @@ INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('WBS状态', '已延期', '已延期', 4),
 ('WBS状态', '待补材料', '待补材料', 5);
 
--- 6. 数据字典 - L1阶段
+-- 5. 数据字典 - L1阶段
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('L1阶段', '启动规划', '启动规划', 1),
 ('L1阶段', '交付实施', '交付实施', 2),
 ('L1阶段', '验收移交', '验收移交', 3),
 ('L1阶段', '运营维护', '运营维护', 4);
 
--- 7. 数据字典 - L2子阶段（启动规划）
+-- 6. 数据字典 - L2子阶段（启动规划）
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('L2子阶段_启动规划', '合同交底', '合同交底', 1),
 ('L2子阶段_启动规划', '团队组建', '团队组建', 2),
 ('L2子阶段_启动规划', '实施方案编制', '实施方案编制', 3);
 
--- 8. 数据字典 - L2子阶段（交付实施）
+-- 7. 数据字典 - L2子阶段（交付实施）
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('L2子阶段_交付实施', '硬件交付', '硬件交付', 1),
 ('L2子阶段_交付实施', '软件交付', '软件交付', 2),
 ('L2子阶段_交付实施', '应用培训', '应用培训', 3);
 
--- 9. 数据字典 - L2子阶段（验收移交）
+-- 8. 数据字典 - L2子阶段（验收移交）
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('L2子阶段_验收移交', '竣工资料提交', '竣工资料提交', 1),
 ('L2子阶段_验收移交', '业主验收会', '业主验收会', 2),
 ('L2子阶段_验收移交', '资产移交确认', '资产移交确认', 3);
 
--- 10. 数据字典 - L2子阶段（运营维护）
+-- 9. 数据字典 - L2子阶段（运营维护）
 INSERT INTO dict_items (category, label, value, sort_order) VALUES
 ('L2子阶段_运营维护', '日常运维', '日常运维', 1),
 ('L2子阶段_运营维护', '定期巡检', '定期巡检', 2),
 ('L2子阶段_运营维护', '故障处理', '故障处理', 3);
+
+-- 10. 数据字典 - 模板类型
+INSERT INTO dict_items (category, label, value, sort_order) VALUES
+('模板类型', '到货验收表', '到货验收表', 1),
+('模板类型', '加电测试表', '加电测试表', 2),
+('模板类型', '校级验收单', '校级验收单', 3),
+('模板类型', '培训确认表', '培训确认表', 4),
+('模板类型', '培训签到表', '培训签到表', 5),
+('模板类型', '培训反馈表', '培训反馈表', 6),
+('模板类型', '其他交付材料', '其他交付材料', 7),
+('模板类型', '项目周报', '项目周报', 8),
+('模板类型', '项目月报', '项目月报', 9),
+('模板类型', '校级周报', '校级周报', 10),
+('模板类型', '校级月报', '校级月报', 11),
+('模板类型', '专项汇报', '专项汇报', 12);
 
 -- 11. 产线类型（9条产品线）
 INSERT INTO production_lines (project_id, code, name, description, is_enabled) VALUES
